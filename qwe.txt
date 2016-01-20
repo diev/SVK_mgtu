@@ -1,0 +1,54 @@
+//      DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+//      if not DirectoryExists(KLIKO_OUT_ARHIV+DEN) then CreateDir(KLIKO_OUT_ARHIV+DEN);
+//      CopyFile(Pchar(f),Pchar(KLIKO_OUT_ARHIV+DEN+ExtractFileName(f)),true);
+//      Sleep(1000);
+
+
+    DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+    if not DirectoryExists(_364P_OUT_ARHIV+DEN) then CreateDir(_364P_OUT_ARHIV+DEN);
+    CopyFile(Pchar(f),Pchar(_364P_OUT_ARHIV+DEN+ExtractFileName(f)),true);
+    Sleep(1000);
+
+    DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+    if not DirectoryExists(_311P_OUT_ARHIV+DEN) then CreateDir(_311P_OUT_ARHIV+DEN);
+    CopyFile(Pchar(f),Pchar(_311P_OUT_ARHIV+DEN+ExtractFileName(f)),true);
+    Sleep(1000);
+
+
+//      message_list(Vrb.Load_key_('1'));  //4706
+//      message_list(vrb.Sign(f,NUM_KEY1,SERIA1));   // накладываем КА
+//      message_list(vrb.EnCrypt(f,NUM_KEY1,SERIA1,kliko));// шифруем
+//      message_list(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1));
+
+
+//    message_list(Vrb.Load_key_('1'));  //4706
+//    message_list(vrb.Sign(f,NUM_KEY1,SERIA1));   // накладываем КА
+//    message_list(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1));
+
+//    message_list(Vrb.Load_key_('2'));  //3434
+//    message_list(vrb.EnCrypt(f,NUM_KEY2,SERIA2,fts));// шифруем   получилось !!!
+//    message_list(vrb.ResetKey_(inttostr(NUM_KEY2) + SERIA2));
+
+    message_list(Vrb.Load_key_('1'));  //4706
+    message_list(vrb.Sign(f,NUM_KEY1,SERIA1));   // накладываем КА
+    message_list(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1));
+
+    message_list(Vrb.Load_key_('2'));  //3434
+    message_list(vrb.EnCrypt(f,NUM_KEY2,SERIA2,fts));// шифруем   получилось !!!
+    message_list(vrb.ResetKey_(inttostr(NUM_KEY2) + SERIA2));
+
+
+//      MoveFile(Pchar(f),Pchar(UTA_KLIKO_OUT+ExtractFileName(f)));
+
+
+//    MoveFile(Pchar(f),Pchar(ARJ_364P_OUT+ExtractFileName(f)));
+//    message_list('Файл '+f+' перенесен в arj');
+//    Sleep(1000);
+
+
+//    MoveFile(Pchar(f),Pchar(ARJ_311P_OUT+ExtractFileName(f)));
+//    message_list('Файл '+f+' перенесен в arj');
+//    Sleep(1000);
+
+
+
