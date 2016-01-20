@@ -27,7 +27,6 @@ type
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure TimerINFO_InTimer(Sender: TObject);
-    procedure TimerKliko_InTimer(Sender: TObject);
     function archive(fl,target:string):string;
     function movefile_(fl,target:string):string;
     function run(fl,eval:string):string;
@@ -46,7 +45,6 @@ type
     PATH_LOGI,
     DEN:string;
     LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL:string;
-//    TimerKliko_in:TTimer;
   public
   end;
 
@@ -72,9 +70,6 @@ begin
   form1.Caption:=form1.Caption+' 1.7.1 от 20/01/2016 ';
   TimerINFO_In:=TTimer.Create(self);
   TimerINFO_In.OnTimer:=TimerINFO_InTimer;
-
-//  TimerKliko_in:=TTimer.Create(self);
-//  TimerKliko_in.OnTimer:=TimerKliko_InTimer;
 
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
@@ -174,25 +169,6 @@ begin
 end;
 
 
-procedure TForm1.TimerKliko_InTimer(Sender: TObject);
-var
-    sr: TSearchRec;
-begin
-  if SysUtils.FindFirst(UTA_KLIKO_IN+'*.kvt1', faAnyFile, sr) = 0 then
-     repeat
-        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
-          // сначала мы копируем в архив
-          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-          if not DirectoryExists(KLIKO_IN_ARHIV+DEN) then CreateDir(KLIKO_IN_ARHIV+DEN);
-          CopyFile(Pchar(UTA_KLIKO_IN+sr.Name),Pchar(KLIKO_IN_ARHIV+DEN+sr.Name),true);
-
-          if not DirectoryExists(KLIKO_NET_IN+DEN) then CreateDir(KLIKO_NET_IN+DEN);
-          MoveFile(Pchar(UTA_KLIKO_IN+sr.Name),Pchar(KLIKO_NET_IN+DEN+sr.Name));
-          message_list('Файл квитанции '+UTA_KLIKO_IN+sr.Name+' перенесен');
-        end;
-      until FindNext(sr) <> 0;
-      FindClose(sr);
-end;
 {*******************************************************************************
   CUT
 *******************************************************************************}
@@ -276,18 +252,26 @@ begin
 if SysUtils.FindFirst(INFO_IN+'*.*', faAnyFile, sr) = 0 then
      repeat
         if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
-          // сначала мы копируем в архив
-          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-          if not DirectoryExists(INFO_ARHIV+DEN) then CreateDir(INFO_ARHIV+DEN);
           // добавлять уникальное имя файла
-          CopyFile(Pchar(INFO_IN+sr.Name),Pchar(INFO_ARHIV+DEN+sr.Name),true);
+          message_list(archive(INFO_IN+sr.Name,INFO_ARHIV));
 
           if not DirectoryExists(INFO_OUT+DEN) then CreateDir(INFO_OUT+DEN);
-          MoveFile(Pchar(INFO_IN+sr.Name),Pchar(INFO_OUT+DEN+sr.Name));
-          message_list('Файл '+INFO_IN+sr.Name+' перенесен');
+          message_list(movefile_(INFO_IN+sr.Name,INFO_OUT+DEN));
         end;
       until FindNext(sr) <> 0;
       FindClose(sr);
+// клико
+if SysUtils.FindFirst(UTA_KLIKO_IN+'*.*', faAnyFile, sr) = 0 then
+     repeat
+        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
+          message_list(archive(UTA_KLIKO_IN+sr.Name,KLIKO_IN_ARHIV));
+
+          if not DirectoryExists(KLIKO_NET_IN+DEN) then CreateDir(KLIKO_NET_IN+DEN);
+          message_list(movefile_(UTA_KLIKO_IN+sr.Name,KLIKO_NET_IN+DEN));
+        end;
+      until FindNext(sr) <> 0;
+      FindClose(sr);
+
 end;
 {**********************************************************************
     вывод на лмст и в лог
