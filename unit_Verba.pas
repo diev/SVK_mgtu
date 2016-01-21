@@ -56,10 +56,10 @@ begin
   EMAIL:='';
   OTD :='';
 
-  if (PUB3 <> '') and (SEC3 <> '') then begin
-    CryptoInit(pAnsiChar(SEC3),pAnsiChar(PUB3));
-    SignInit(pAnsiChar(SEC3),pAnsiChar(PUB3));
-  end;
+//  if (PUB3 <> '') and (SEC3 <> '') then begin
+//    CryptoInit(pAnsiChar(SEC3),pAnsiChar(PUB3));
+//    SignInit(pAnsiChar(SEC3),pAnsiChar(PUB3));
+//  end;
 end;
 {******************************************************************************
   Description: Load_key

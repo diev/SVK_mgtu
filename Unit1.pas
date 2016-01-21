@@ -7,6 +7,11 @@ uses
   Dialogs,inifiles, StdCtrls, ExtCtrls, ComCtrls;
 
 type
+
+  StrTD = record
+    path,maska,arhiv,target:string;
+  end;
+
   TForm1 = class(TForm)
     OpenDialog1: TOpenDialog;
     GroupBox1: TGroupBox;
@@ -23,28 +28,30 @@ type
     ListBox1: TListBox;
     Button9: TButton;
     Button3: TButton;
+    ListBox2: TListBox;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure TimerINFO_InTimer(Sender: TObject);
     function archive(fl,target:string):string;
     function movefile_(fl,target:string):string;
     function run(fl,eval:string):string;
     procedure Log(mes: string);
     procedure message_list(ms:string);
-    function  checkloadkey:boolean;
     procedure Button2Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button7Click(Sender: TObject);
     procedure Button9Click(Sender: TObject);
+    procedure TimerProc(Sender: TObject);
   private
-    INFO_IN,INFO_OUT,INFO_ARHIV,
-    KLIKO_IN_ARHIV,KLIKO_OUT_ARHIV,UTA_KLIKO_IN, UTA_KLIKO_OUT,KLIKO_NET_IN,
+    KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
     ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,
     ARJ_311P_OUT,_311P_OUT_ARHIV,SCRIPT_311P,
     PATH_LOGI,
     DEN:string;
     LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL:string;
+    DIR:string;
+    TimerPool:array of TTimer;
+    TimerData:array of StrTD;
   public
   end;
 
@@ -59,29 +66,30 @@ implementation
 uses unit_Verba;
 
 {$R *.dfm}
+{*******************************************************************************
+  CUT
+*******************************************************************************}
+function cut(var s_in:string;delims:string):string;
+begin
+  try
+    Result:=copy(s_in,1,pos(delims,s_in)-1);
+    delete(s_in,1,pos(delims,s_in));
+  except
+  end;
+end;
 {**********************************************************************
     description: FormCreate
 ************************************************************************}
 procedure TForm1.FormCreate(Sender: TObject);
 var
  inf:TIniFile;
- TimerINFO_In:TTimer;
+ s_:string;kt:integer;
 begin
   form1.Caption:=form1.Caption+' 1.7.1 от 20/01/2016 ';
-  TimerINFO_In:=TTimer.Create(self);
-  TimerINFO_In.OnTimer:=TimerINFO_InTimer;
-
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
-  INFO_IN         :=inf.ReadString('DIRECTORY','INFO_IN','');
-  INFO_OUT        :=inf.ReadString('DIRECTORY','INFO_OUT','');
-  INFO_ARHIV      :=inf.ReadString('DIRECTORY','INFO_ARHIV','');
-
-  UTA_KLIKO_IN    :=inf.ReadString('DIRECTORY','UTA_KLIKO_IN','');  // квитанции
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
   KLIKO_OUT_ARHIV :=inf.ReadString('DIRECTORY','KLIKO_OUT_ARHIV','');//архив незашифрованных
-  KLIKO_IN_ARHIV  :=inf.ReadString('DIRECTORY','KLIKO_IN_ARHIV',''); // архив квитанций
-  KLIKO_NET_IN    :=inf.ReadString('DIRECTORY','KLIKO_NET_IN','');
 
   ARJ_364P_OUT    :=inf.ReadString('DIRECTORY','ARJ_364P_OUT','');
   _364P_OUT_ARHIV :=inf.ReadString('DIRECTORY','_364P_OUT_ARHIV',''); //архив незашифрованных
@@ -91,9 +99,9 @@ begin
   _311P_OUT_ARHIV :=inf.ReadString('DIRECTORY','_311P_OUT_ARHIV','');//архив незашифрованных
   SCRIPT_311P     :=inf.ReadString('DIRECTORY','SCRIPT_311P','');
 
+  DIR             :=inf.ReadString('DIRECTORY','DIR','');
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
   LOGI            :=inf.ReadBool('COMMON','LOGI',false);  CheckBox1.Checked:=LOGI;
-  TimerINFO_In.Interval:=inf.ReadInteger('COMMON','TIME_IN',30)*1000;{по умолчанию 30 сек.}
 
   BUTTON1_EVAL   :=inf.ReadString('COMMON','BUTTON1_EVAL','');
   BUTTON2_EVAL   :=inf.ReadString('COMMON','BUTTON2_EVAL','');
@@ -132,53 +140,60 @@ begin
  if KEY_DEV1='' then ShowMessage('не указан ключ 1');
  if KEY_DEV2='' then ShowMessage('не указан ключ 2');
 
- if not DirectoryExists(INFO_ARHIV) then CreateDir(INFO_ARHIV);
- if not DirectoryExists(KLIKO_IN_ARHIV) then CreateDir(KLIKO_IN_ARHIV);
  if not DirectoryExists(KLIKO_OUT_ARHIV) then CreateDir(KLIKO_OUT_ARHIV);
 
  {переинициализируется при каждом копировании}
  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
- {также создается новый день при каждом копировании файлов}
- if not DirectoryExists(INFO_ARHIV+DEN) then CreateDir(INFO_ARHIV+DEN);
- if not DirectoryExists(KLIKO_IN_ARHIV+DEN) then CreateDir(KLIKO_IN_ARHIV+DEN);
- if not DirectoryExists(KLIKO_OUT_ARHIV+DEN) then CreateDir(KLIKO_OUT_ARHIV+DEN);
 
-  TimerINFO_In.Enabled:=true;
   Label1.Caption:='Мониторинг запущен';
   message_list('Начало обработки');
   vrb:=TVerba.Create;
 
-  //checkloadkey;
+{ разбор шаблонов }
+  kt:=0;
+  if DIR<>'' then
+    while Pos('#',DIR)<>0 do begin
+      s_:=cut(DIR,'#');
+      SetLength(TimerData, kt+1);
+      TimerData[kt].path :=cut(s_,';');
+      TimerData[kt].maska:=cut(s_,';');
+      TimerData[kt].arhiv:=cut(s_,';');
+      TimerData[kt].target:=cut(s_,';');
+
+      SetLength(TimerPool, kt+1);
+      TimerPool[kt]:= TTimer.Create(Self); // массив изб. от именования таймеров, много таймеров запускалок лучше
+      TimerPool[kt].tag:=kt;
+      TimerPool[kt].Interval:=strtoint(cut(s_,';'))*1000;
+      TimerPool[kt].OnTimer:= TimerProc;
+      TimerPool[kt].enabled:=true;
+
+      // добавляем на форму
+      ListBox2.Items.Add(TimerData[kt].path+TimerData[kt].maska+';'+TimerData[kt].arhiv+';'+TimerData[kt].target+';'+inttostr(TimerPool[kt].Interval div 1000));
+      inc(kt);
+    end;
+
 end;
-
-function TForm1.checkloadkey: boolean;
+{**********************************************************************
+    обработчик таймеров шедулера
+************************************************************************}
+procedure TForm1.TimerProc(Sender: TObject);
+var
+  ind:integer;
+  sr: TSearchRec;
 begin
-  if (Pos(inttostr(NUM_KEY1),vrb.checkKey(''))<>0) or (Pos(inttostr(NUM_KEY2),vrb.checkKey(''))<>0) then begin
-    Button2.Enabled:=true;
-    Button4.Enabled:=true;
-    Button5.Enabled:=true;
-    Button7.Enabled:=true;
-    Result:=true;
-  end else begin
-    Button2.Enabled:=false;
-    Button4.Enabled:=false;
-    Button5.Enabled:=false;
-    Button7.Enabled:=false;
-    Result:=false;
-  end;
-end;
+  ind:=(Sender as TTimer).Tag;
+  if SysUtils.FindFirst(TimerData[ind].PATH+TimerData[ind].Maska, faAnyFile, sr) = 0 then
+    repeat
+      if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
+          // добавлять уникальное имя файла
+          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
 
-
-{*******************************************************************************
-  CUT
-*******************************************************************************}
-function cut(var s_in:string;delims:string):string;
-begin
-  try
-    Result:=copy(s_in,1,pos(delims,s_in)-1);
-    delete(s_in,1,pos(delims,s_in));
-  except
-  end;
+          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+          if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
+          message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+      end;
+    until FindNext(sr) <> 0;
+  FindClose(sr);
 end;
 {**********************************************************************
     клико
@@ -241,37 +256,6 @@ begin
  if Dialogs.MessageDlg('Закрыть программу ?', mtConfirmation, [mbYes, mbNo], 0) = mrNo then CanClose:=false else begin
     Log('Конец обработки');
  end;
-end;
-{**********************************************************************
-    Обработка INFO
-************************************************************************}
-procedure TForm1.TimerINFO_InTimer(Sender: TObject);
-var
-    sr: TSearchRec;
-begin
-if SysUtils.FindFirst(INFO_IN+'*.*', faAnyFile, sr) = 0 then
-     repeat
-        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
-          // добавлять уникальное имя файла
-          message_list(archive(INFO_IN+sr.Name,INFO_ARHIV));
-
-          if not DirectoryExists(INFO_OUT+DEN) then CreateDir(INFO_OUT+DEN);
-          message_list(movefile_(INFO_IN+sr.Name,INFO_OUT+DEN));
-        end;
-      until FindNext(sr) <> 0;
-      FindClose(sr);
-// клико
-if SysUtils.FindFirst(UTA_KLIKO_IN+'*.*', faAnyFile, sr) = 0 then
-     repeat
-        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
-          message_list(archive(UTA_KLIKO_IN+sr.Name,KLIKO_IN_ARHIV));
-
-          if not DirectoryExists(KLIKO_NET_IN+DEN) then CreateDir(KLIKO_NET_IN+DEN);
-          message_list(movefile_(UTA_KLIKO_IN+sr.Name,KLIKO_NET_IN+DEN));
-        end;
-      until FindNext(sr) <> 0;
-      FindClose(sr);
-
 end;
 {**********************************************************************
     вывод на лмст и в лог

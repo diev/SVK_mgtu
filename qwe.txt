@@ -52,3 +52,65 @@
 
 
 
+{**********************************************************************
+    ќбработка INFO
+************************************************************************}
+procedure TForm1.TimerINFO_InTimer(Sender: TObject);
+begin
+{if SysUtils.FindFirst(INFO_IN+'*.*', faAnyFile, sr) = 0 then
+     repeat
+        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
+          // добавл€ть уникальное им€ файла
+          message_list(archive(INFO_IN+sr.Name,INFO_ARHIV));
+
+          if not DirectoryExists(INFO_OUT+DEN) then CreateDir(INFO_OUT+DEN);
+          message_list(movefile_(INFO_IN+sr.Name,INFO_OUT+DEN));
+        end;
+      until FindNext(sr) <> 0;
+      FindClose(sr);}
+// клико
+{if SysUtils.FindFirst(UTA_KLIKO_IN+'*.*', faAnyFile, sr) = 0 then
+     repeat
+        if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
+          message_list(archive(UTA_KLIKO_IN+sr.Name,KLIKO_IN_ARHIV));
+
+          if not DirectoryExists(KLIKO_NET_IN+DEN) then CreateDir(KLIKO_NET_IN+DEN);
+          message_list(movefile_(UTA_KLIKO_IN+sr.Name,KLIKO_NET_IN+DEN));
+        end;
+      until FindNext(sr) <> 0;
+      FindClose(sr);}
+
+end;
+
+function TForm1.checkloadkey: boolean;
+begin
+  if (Pos(inttostr(NUM_KEY1),vrb.checkKey(''))<>0) or (Pos(inttostr(NUM_KEY2),vrb.checkKey(''))<>0) then begin
+    Button2.Enabled:=true;
+    Button4.Enabled:=true;
+    Button5.Enabled:=true;
+    Button7.Enabled:=true;
+    Result:=true;
+  end else begin
+    Button2.Enabled:=false;
+    Button4.Enabled:=false;
+    Button5.Enabled:=false;
+    Button7.Enabled:=false;
+    Result:=false;
+  end;
+end;
+
+
+//  INFO_IN         :=inf.ReadString('DIRECTORY','INFO_IN','');
+//  INFO_OUT        :=inf.ReadString('DIRECTORY','INFO_OUT','');
+//  INFO_ARHIV      :=inf.ReadString('DIRECTORY','INFO_ARHIV','');
+
+//  UTA_KLIKO_IN    :=inf.ReadString('DIRECTORY','UTA_KLIKO_IN','');  // квитанции
+//  KLIKO_IN_ARHIV  :=inf.ReadString('DIRECTORY','KLIKO_IN_ARHIV',''); // архив квитанций
+//  KLIKO_NET_IN    :=inf.ReadString('DIRECTORY','KLIKO_NET_IN','');
+
+//  TimerINFO_In.Interval:=inf.ReadInteger('COMMON','TIME_IN',30)*1000;{по умолчанию 30 сек.}
+
+// if not DirectoryExists(INFO_ARHIV) then CreateDir(INFO_ARHIV);
+// if not DirectoryExists(KLIKO_IN_ARHIV) then CreateDir(KLIKO_IN_ARHIV);
+// if not DirectoryExists(INFO_ARHIV+DEN) then CreateDir(INFO_ARHIV+DEN);
+// if not DirectoryExists(KLIKO_IN_ARHIV+DEN) then CreateDir(KLIKO_IN_ARHIV+DEN);

@@ -124,10 +124,18 @@ object Form1: TForm1
         TabOrder = 1
         OnClick = Button3Click
       end
+      object ListBox2: TListBox
+        Left = 0
+        Top = 168
+        Width = 737
+        Height = 177
+        ItemHeight = 13
+        TabOrder = 2
+      end
     end
   end
   object OpenDialog1: TOpenDialog
-    Left = 624
-    Top = 184
+    Left = 640
+    Top = 128
   end
 end
