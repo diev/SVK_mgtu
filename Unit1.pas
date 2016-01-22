@@ -140,7 +140,7 @@ begin
  if KEY_DEV1='' then ShowMessage('не указан ключ 1');
  if KEY_DEV2='' then ShowMessage('не указан ключ 2');
 
- if not DirectoryExists(KLIKO_OUT_ARHIV) then CreateDir(KLIKO_OUT_ARHIV);
+ if not DirectoryExists(KLIKO_OUT_ARHIV) then ForceDirectories(KLIKO_OUT_ARHIV);
 
  {переинициализируется при каждом копировании}
  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
