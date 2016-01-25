@@ -42,6 +42,7 @@ type
     procedure Button7Click(Sender: TObject);
     procedure Button9Click(Sender: TObject);
     procedure TimerProc(Sender: TObject);
+    function ARJ_run(in_,out_,arch:string):string;
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
     ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,
@@ -52,6 +53,7 @@ type
     DIR:string;
     TimerPool:array of TTimer;
     TimerData:array of StrTD;
+    ARJ:string;
   public
   end;
 
@@ -102,6 +104,7 @@ begin
   DIR             :=inf.ReadString('DIRECTORY','DIR','');
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
   LOGI            :=inf.ReadBool('COMMON','LOGI',false);  CheckBox1.Checked:=LOGI;
+  ARJ             :=inf.ReadString('COMMON','ARJ','');
 
   BUTTON1_EVAL   :=inf.ReadString('COMMON','BUTTON1_EVAL','');
   BUTTON2_EVAL   :=inf.ReadString('COMMON','BUTTON2_EVAL','');
@@ -157,8 +160,8 @@ begin
       SetLength(TimerData, kt+1);
       TimerData[kt].path :=cut(s_,';');
       TimerData[kt].maska:=cut(s_,';');
-      TimerData[kt].arhiv:=cut(s_,';');
-      TimerData[kt].target:=cut(s_,';');
+      TimerData[kt].arhiv:=cut(s_,';');if not DirectoryExists(TimerData[kt].arhiv) then ForceDirectories(TimerData[kt].arhiv);
+      TimerData[kt].target:=cut(s_,';');if not DirectoryExists(TimerData[kt].target) then ForceDirectories(TimerData[kt].target);
 
       SetLength(TimerPool, kt+1);
       TimerPool[kt]:= TTimer.Create(Self); // массив изб. от именования таймеров, много таймеров запускалок лучше
@@ -180,17 +183,24 @@ procedure TForm1.TimerProc(Sender: TObject);
 var
   ind:integer;
   sr: TSearchRec;
+  postfix,newname:string;
 begin
   ind:=(Sender as TTimer).Tag;
+  postfix:='_'+StringReplace(TimeToStr(Now), ':', '_',[rfReplaceAll, rfIgnoreCase]);
+
   if SysUtils.FindFirst(TimerData[ind].PATH+TimerData[ind].Maska, faAnyFile, sr) = 0 then
     repeat
       if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
           // добавлять уникальное имя файла
-          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
-
+          if ind=1 then begin
+            newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
+            RenameFile(TimerData[ind].PATH+sr.Name,newname);
+          end
+          else newname:=TimerData[ind].PATH+sr.Name;
+          message_list(archive(newname,TimerData[ind].arhiv));
           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
           if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
-          message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+          message_list(movefile_(newname,TimerData[ind].target+DEN));
       end;
     until FindNext(sr) <> 0;
   FindClose(sr);
@@ -348,6 +358,14 @@ begin
   MoveFile(Pchar(fl),Pchar(target+ExtractFileName(fl)));
   Sleep(1000);
   Result:='Файл '+fl+' перенесен в '+target;
+end;
+{**********************************************************************
+    аналог ARJ
+************************************************************************}
+function TForm1.ARJ_run(in_, out_, arch:string): string;
+begin
+  ShellExecute(0,'open',PChar(ARJ), pchar('m -e '), pchar(ExtractFileDir(ARJ)), SW_SHOW);
+  result:='';
 end;
 
 end.
