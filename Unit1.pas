@@ -29,6 +29,8 @@ type
     Button9: TButton;
     Button3: TButton;
     ListBox2: TListBox;
+    Button1: TButton;
+    Button8: TButton;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -43,13 +45,18 @@ type
     procedure Button9Click(Sender: TObject);
     procedure TimerProc(Sender: TObject);
     function ARJ_run(in_,out_,arch:string):string;
+    function archiveRun311(f:string):string;
+    procedure Button1Click(Sender: TObject);
+    procedure Button8Click(Sender: TObject);
+
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
-    ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,
-    ARJ_311P_OUT,_311P_OUT_ARHIV,SCRIPT_311P,
+    ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,UTA_364P_OUT,_364P_TK,ARJ_364P_OUT2,
+    ARJ_311P_OUT,_311P_OUT_ARHIV,SCRIPT_311P,UTA_311P_OUT,_311P_TK,ARJ_311P_OUT2,
+    ARJ_365P_OUT,_365P_OUT_ARHIV,SCRIPT_365P,UTA_365P_OUT,_365P_TK,ARJ_365P_OUT2,ARJ_365P_OUT_kvit,
     PATH_LOGI,
     DEN:string;
-    LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL:string;
+    LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL,BUTTON5_EVAL,BUTTON6_EVAL:string;
     DIR:string;
     TimerPool:array of TTimer;
     TimerData:array of StrTD;
@@ -65,7 +72,7 @@ var
 
 implementation
 
-uses unit_Verba;
+uses unit_Verba, DateUtils;
 
 {$R *.dfm}
 {*******************************************************************************
@@ -96,10 +103,24 @@ begin
   ARJ_364P_OUT    :=inf.ReadString('DIRECTORY','ARJ_364P_OUT','');
   _364P_OUT_ARHIV :=inf.ReadString('DIRECTORY','_364P_OUT_ARHIV',''); //архив незашифрованных
   SCRIPT_364P     :=inf.ReadString('DIRECTORY','SCRIPT_364P','');
+  ARJ_364P_OUT2   :=inf.ReadString('DIRECTORY','ARJ_364P_OUT2','');
+  UTA_364P_OUT    :=inf.ReadString('DIRECTORY','UTA_364P_OUT','');
+  _364P_TK        :=inf.ReadString('DIRECTORY','_364P_TK','');
 
   ARJ_311P_OUT    :=inf.ReadString('DIRECTORY','ARJ_311P_OUT','');
   _311P_OUT_ARHIV :=inf.ReadString('DIRECTORY','_311P_OUT_ARHIV','');//архив незашифрованных
   SCRIPT_311P     :=inf.ReadString('DIRECTORY','SCRIPT_311P','');
+  ARJ_311P_OUT2   :=inf.ReadString('DIRECTORY','ARJ_311P_OUT2','');
+  UTA_311P_OUT    :=inf.ReadString('DIRECTORY','UTA_311P_OUT','');
+  _311P_TK        :=inf.ReadString('DIRECTORY','_311P_TK','');
+
+  ARJ_365P_OUT    :=inf.ReadString('DIRECTORY','ARJ_365P_OUT','');
+  _365P_OUT_ARHIV :=inf.ReadString('DIRECTORY','_365P_OUT_ARHIV','');//архив незашифрованных
+  SCRIPT_365P     :=inf.ReadString('DIRECTORY','SCRIPT_365P','');
+  ARJ_365P_OUT2   :=inf.ReadString('DIRECTORY','ARJ_365P_OUT2','');
+  UTA_365P_OUT    :=inf.ReadString('DIRECTORY','UTA_365P_OUT','');
+  _365P_TK        :=inf.ReadString('DIRECTORY','_365P_TK','');
+  ARJ_365P_OUT_kvit:=inf.ReadString('DIRECTORY','ARJ_365P_OUT_kvit','');
 
   DIR             :=inf.ReadString('DIRECTORY','DIR','');
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
@@ -110,6 +131,8 @@ begin
   BUTTON2_EVAL   :=inf.ReadString('COMMON','BUTTON2_EVAL','');
   BUTTON3_EVAL   :=inf.ReadString('COMMON','BUTTON3_EVAL','');
   BUTTON4_EVAL   :=inf.ReadString('COMMON','BUTTON4_EVAL','');
+  BUTTON5_EVAL   :=inf.ReadString('COMMON','BUTTON5_EVAL','');
+  BUTTON6_EVAL   :=inf.ReadString('COMMON','BUTTON6_EVAL','');
 
 // verba ========================================================
 
@@ -192,11 +215,10 @@ begin
     repeat
       if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
           // добавлять уникальное имя файла
-          if ind=1 then begin
+          //if ind=1 then begin
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-          end
-          else newname:=TimerData[ind].PATH+sr.Name;
+          //end else newname:=TimerData[ind].PATH+sr.Name;
           message_list(archive(newname,TimerData[ind].arhiv));
           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
           if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
@@ -221,10 +243,33 @@ end;
 ************************************************************************}
 procedure TForm1.Button4Click(Sender: TObject);
 var
-  f:string;
+  f,lastfile_arj,tk:string;
+  sr: TSearchRec;
+  i:integer;
 begin
-  if OpenDialog1.Execute then begin f:=OpenDialog1.FileName; message_list('----------фтс 364-п ' + f + '-----------');
-    run(f,BUTTON2_EVAL);
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      message_list('----------фтс 364-п ' + f + '-----------');
+      run(f,BUTTON2_EVAL);
+    end;
+  run(f,'SCRIPT(SCRIPT_364P);');
+  sleep(2000);
+  if SysUtils.FindFirst(ARJ_364P_OUT2+'*.arj', faAnyFile, sr) = 0 then
+    lastfile_arj:=ARJ_364P_OUT2 + sr.Name;
+  FindClose(sr);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(2000);
+
+  tk:=inttostr(MonthOf(now));
+  if Length(tk)=1 then tk:='0'+tk;
+  tk:=_364P_TK +'a'+tk+'344.099.arj';
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(lastfile_arj,ARJ_364P_OUT2 + tk,'');
+  sleep(1000);  
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(1000);
+  message_list(movefile_(lastfile_arj,UTA_364p_OUT));
   end;
 end;
 {**********************************************************************
@@ -232,10 +277,24 @@ end;
 ************************************************************************}
 procedure TForm1.Button7Click(Sender: TObject);
 var
-  f:string;
+  f,lastfile_arj:string;
+  sr: TSearchRec;
+  i:integer;
 begin
-  if OpenDialog1.Execute then begin f:=OpenDialog1.FileName; message_list('----------фтс 311-п ' + f + '-----------');
-    run(f,BUTTON4_EVAL);
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      message_list('----------фтс 311-п ' + f + '-----------');
+      run(f,BUTTON4_EVAL);
+    end;
+  run(f,'SCRIPT(SCRIPT_311P);');
+  sleep(1000);
+  if SysUtils.FindFirst(ARJ_311P_OUT2+'*.arj', faAnyFile, sr) = 0 then
+    lastfile_arj:=ARJ_311P_OUT2 + sr.Name;
+  FindClose(sr);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(2000);
+  message_list(movefile_(lastfile_arj,UTA_311p_OUT));
   end;
 end;
 {****************************************************************************
@@ -314,6 +373,8 @@ comm:=eval;
             if parametr='UTA_KLIKO_OUT' then target:=UTA_KLIKO_OUT
             else if parametr='ARJ_364P_OUT' then target:=ARJ_364P_OUT
             else if parametr='ARJ_311P_OUT' then target:=ARJ_311P_OUT
+            else if parametr='ARJ_365P_OUT' then target:=ARJ_365P_OUT
+            else if parametr='ARJ_365P_OUT_kvit' then target:=ARJ_365P_OUT_kvit
             else target:=parametr;
             message_list(movefile_(fl,target));
           end
@@ -324,6 +385,7 @@ comm:=eval;
             if parametr='KLIKO_OUT_ARHIV' then target:=KLIKO_OUT_ARHIV
             else if parametr='_364P_OUT_ARHIV' then target:=_364P_OUT_ARHIV
             else if parametr='_311P_OUT_ARHIV' then target:=_311P_OUT_ARHIV
+            else if parametr='_365P_OUT_ARHIV' then target:=_365P_OUT_ARHIV
             else target:=parametr;
             message_list(archive(fl,target));
           end
@@ -333,6 +395,7 @@ comm:=eval;
 
             if parametr='SCRIPT_364P' then script_name:=SCRIPT_364P
             else if parametr='SCRIPT_311P' then script_name:=SCRIPT_311P
+            else if parametr='SCRIPT_365P' then script_name:=SCRIPT_365P
             else script_name:=parametr;
             ShellExecute(0,'open',PChar(script_name), pchar(''), pchar(ExtractFileDir(script_name)), SW_SHOW);
             message_list('запущен скрипт ' + script_name);
@@ -364,8 +427,124 @@ end;
 ************************************************************************}
 function TForm1.ARJ_run(in_, out_, arch:string): string;
 begin
-  ShellExecute(0,'open',PChar(ARJ), pchar('m -e '), pchar(ExtractFileDir(ARJ)), SW_SHOW);
-  result:='';
+  ShellExecute(0,'open',PChar(ARJ), pchar('m -e '+out_+' '+in_), pchar(ExtractFileDir(ARJ)), SW_SHOW);
+  sleep(1000);
+  result:=out_;
+end;
+
+function TForm1.archiveRun311(f:string): string;
+Const BTypeFilenameHead:string = 'SFC';
+  ATypeMask:string = 'SBC??4525344_*_*_xxx??.xml'; // маска для архивации сообщений по юр. лицам и иже с ними
+  BTypeMask:string = 'SFC??4525344_*_*_7??.xml'; //маска для архивации сообщений по физ. лицам (не ИП)
+  BIK:string = '25344';
+var
+ inf:TIniFile;
+ ArchiveDate:string;
+ ArchiveNameA:string; //имя файла архива
+ FilesStr:string;
+ ArchivePathA:string;
+begin
+  inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
+//    date_311p       :=inf.ReadString('DIRECTORY','date_311p','');
+//    count_311p      :=inf.ReadInteger('DIRECTORY','count_311p',0);
+  inf.free;
+
+  ArchiveDate:=DateToStr(now);
+{  if date_311p=ArchiveDate then
+    inc(count_311p) else begin
+     date_311p:=ArchiveDate;
+     count_311p:=0;
+    end;}
+
+  inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
+//    inf.WriteString('DIRECTORY','date_311p',date_311p);
+//    inf.WriteInteger('DIRECTORY','count_311p',count_311p);
+  inf.free;
+
+  ArchiveDate:= FormatDateTime('yymmdd', strtodatetime(ArchiveDate));
+//  FilesStr:= '0000' + inttostr(count_311p);
+  FilesStr:=copy(FilesStr, Length(FilesStr)-3,4);
+
+  //формируем имя файла архива
+  ArchiveNameA:= 'AN' + BIK + ArchiveDate + FilesStr +'.arj';
+  //ArchiveNameB = "BN"& BIK & ArchiveDay & FilesStr &".arj"
+
+  //Полный путь к файлу архива - для каждого типа
+  ArchivePathA:=ARJ_311P_OUT +ArchiveNameA;
+  //ArchivePathB = ArchivePath & ArchiveNameB
+
+  // архивируем
+  ShellExecute(0,'open',PChar(ARJ), pchar(' m -e '+ ArchivePathA+' '+f), pchar(ExtractFileDir(ARJ)), SW_SHOW);
+  Sleep(1000);
+  Result:=ArchivePathA;
+end;
+{**********************************************************************
+    фтс 365-п ответы BOS
+************************************************************************}
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  f,lastfile_arj,tk:string;
+  sr: TSearchRec;
+  i:integer;
+begin
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      message_list('----------фтс 365-п ответы ' + f + '-----------');
+      run(f,BUTTON5_EVAL);
+    end;
+  run(f,'SCRIPT(SCRIPT_365P);');
+  sleep(2000);
+  if SysUtils.FindFirst(ARJ_365P_OUT2+'*.arj', faAnyFile, sr) = 0 then
+    lastfile_arj:=ARJ_365P_OUT2 + sr.Name;
+  FindClose(sr);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(2000);
+
+  tk:=inttostr(MonthOf(now));
+  if Length(tk)=1 then tk:='0'+tk;
+  tk:=_365P_TK +'a'+tk+'344.099.arj';
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(lastfile_arj,ARJ_365P_OUT2 + tk,'');
+  sleep(1000);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(1000);
+  message_list(movefile_(lastfile_arj,UTA_365p_OUT));
+  end;
+end;
+{**********************************************************************
+    фтс 365-п квитанции PB1
+************************************************************************}
+procedure TForm1.Button8Click(Sender: TObject);
+var
+  f,lastfile_arj,tk:string;
+  sr: TSearchRec;
+  i:integer;
+begin
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      message_list('----------фтс 365-п квитанции ' + f + '-----------');
+      run(f,BUTTON6_EVAL);
+    end;
+  run(f,'SCRIPT(SCRIPT_365P);');
+  sleep(2000);
+  if SysUtils.FindFirst(ARJ_365P_OUT2+'*.arj', faAnyFile, sr) = 0 then
+    lastfile_arj:=ARJ_365P_OUT2 + sr.Name;
+  FindClose(sr);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(2000);
+
+  tk:=inttostr(MonthOf(now));
+  if Length(tk)=1 then tk:='0'+tk;
+  tk:=_365P_TK +'a'+tk+'344.099.arj';
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(lastfile_arj,ARJ_365P_OUT2 + tk,'');
+  sleep(1000);
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  sleep(1000);
+  message_list(movefile_(lastfile_arj,UTA_365p_OUT));
+  end;
 end;
 
 end.

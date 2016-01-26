@@ -75,6 +75,24 @@ object Form1: TForm1
       Caption = #1051#1086#1075#1080
       TabOrder = 4
     end
+    object Button1: TButton
+      Left = 16
+      Top = 152
+      Width = 129
+      Height = 25
+      Caption = #1060#1053#1057' 365-'#1087' '#1086#1090#1074#1077#1090
+      TabOrder = 5
+      OnClick = Button1Click
+    end
+    object Button8: TButton
+      Left = 16
+      Top = 184
+      Width = 129
+      Height = 25
+      Caption = #1060#1053#1057' 365-'#1087' '#1082#1074#1080#1090#1072#1085#1094#1080#1080
+      TabOrder = 6
+      OnClick = Button8Click
+    end
   end
   object StatusBar1: TStatusBar
     Left = 0
@@ -135,6 +153,7 @@ object Form1: TForm1
     end
   end
   object OpenDialog1: TOpenDialog
+    Options = [ofHideReadOnly, ofAllowMultiSelect, ofEnableSizing]
     Left = 640
     Top = 128
   end
