@@ -254,21 +254,21 @@ begin
       run(f,BUTTON2_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_364P);');
-  sleep(2000);
+  ShowMessage('Сформирован сводный архив');
   if SysUtils.FindFirst(ARJ_364P_OUT2+'*.arj', faAnyFile, sr) = 0 then
     lastfile_arj:=ARJ_364P_OUT2 + sr.Name;
   FindClose(sr);
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(2000);
+  ShowMessage('Сводный архив подписан КА');
 
   tk:=inttostr(MonthOf(now));
   if Length(tk)=1 then tk:='0'+tk;
   tk:=_364P_TK +'a'+tk+'344.099.arj';
   // создаем транспортный конверт
   lastfile_arj:=ARJ_run(lastfile_arj,ARJ_364P_OUT2 + tk,'');
-  sleep(1000);  
+  ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(1000);
+  ShowMessage('Транспортный конверт подписан КА');
   message_list(movefile_(lastfile_arj,UTA_364p_OUT));
   end;
 end;
@@ -277,7 +277,7 @@ end;
 ************************************************************************}
 procedure TForm1.Button7Click(Sender: TObject);
 var
-  f,lastfile_arj:string;
+  f,lastfile_arj,tk:string;
   sr: TSearchRec;
   i:integer;
 begin
@@ -288,12 +288,21 @@ begin
       run(f,BUTTON4_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_311P);');
-  sleep(1000);
+  ShowMessage('Сформирован сводный архив');
   if SysUtils.FindFirst(ARJ_311P_OUT2+'*.arj', faAnyFile, sr) = 0 then
     lastfile_arj:=ARJ_311P_OUT2 + sr.Name;
   FindClose(sr);
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(2000);
+  ShowMessage('Сводный архив подписан КА');
+
+  tk:=inttostr(MonthOf(now));
+  if Length(tk)=1 then tk:='0'+tk;
+  tk:=_311P_TK +'a'+tk+'344.099.arj';
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(lastfile_arj,ARJ_311P_OUT2 + tk,'');
+  ShowMessage('Сформирован транспортный конверт');
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  ShowMessage('Транспортный конверт подписан КА');
   message_list(movefile_(lastfile_arj,UTA_311p_OUT));
   end;
 end;
@@ -494,21 +503,21 @@ begin
       run(f,BUTTON5_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
-  sleep(2000);
+  ShowMessage('Сформирован сводный архив');
   if SysUtils.FindFirst(ARJ_365P_OUT2+'*.arj', faAnyFile, sr) = 0 then
     lastfile_arj:=ARJ_365P_OUT2 + sr.Name;
   FindClose(sr);
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(2000);
+  ShowMessage('Сводный архив подписан КА');
 
   tk:=inttostr(MonthOf(now));
   if Length(tk)=1 then tk:='0'+tk;
   tk:=_365P_TK +'a'+tk+'344.099.arj';
   // создаем транспортный конверт
   lastfile_arj:=ARJ_run(lastfile_arj,ARJ_365P_OUT2 + tk,'');
-  sleep(1000);
+  ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(1000);
+  ShowMessage('Транспортный конверт подписан КА');
   message_list(movefile_(lastfile_arj,UTA_365p_OUT));
   end;
 end;
@@ -528,21 +537,21 @@ begin
       run(f,BUTTON6_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
-  sleep(2000);
+  ShowMessage('Сформирован сводный архив');
   if SysUtils.FindFirst(ARJ_365P_OUT2+'*.arj', faAnyFile, sr) = 0 then
     lastfile_arj:=ARJ_365P_OUT2 + sr.Name;
   FindClose(sr);
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(2000);
+  ShowMessage('Сводный архив подписан КА');
 
   tk:=inttostr(MonthOf(now));
   if Length(tk)=1 then tk:='0'+tk;
   tk:=_365P_TK +'a'+tk+'344.099.arj';
   // создаем транспортный конверт
   lastfile_arj:=ARJ_run(lastfile_arj,ARJ_365P_OUT2 + tk,'');
-  sleep(1000);
+  ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  sleep(1000);
+  ShowMessage('Транспортный конверт подписан КА');
   message_list(movefile_(lastfile_arj,UTA_365p_OUT));
   end;
 end;
