@@ -49,7 +49,6 @@ type
     function archiveRun311(f:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
-    procedure Button10Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -96,7 +95,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.1 от 20/01/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.2 от 01/02/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -223,13 +222,14 @@ begin
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
             message_list(archive(newname,TimerData[ind].arhiv));
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-            if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
+            if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
             message_list(movefile_(newname,TimerData[ind].target+DEN));
           end;
           //311P
           if ind = 1 then begin
            // квитанция от цб
            if pos('GU_',sr.Name) = 0 then begin
+               message_list('311p квитанция от цб');
                message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
@@ -239,11 +239,15 @@ begin
                if FileExists(TimerData[ind].PATH+sr.Name) then DeleteFile(TimerData[ind].PATH+sr.Name);
 
                DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-               if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
+               if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+               sleep(1000);
                message_list(movefile_(lastfile_arj,TimerData[ind].target+DEN));
            end;
+          end;
+          if ind = 2 then begin
            // квитанция от фнс
            if pos('GU_',sr.Name) <> 0 then begin
+               message_list('311p квитанция от фнс');
                message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
@@ -257,8 +261,9 @@ begin
                 repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
+                  sleep(1000);
                   message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target+DEN));
-                end;  
+                end;
                 until FindNext(sr1) <> 0;
                FindClose(sr1);
            end;
@@ -603,18 +608,6 @@ begin
   ShellExecute(0,'open',PChar(ARJ), pchar('e '+name_archive), pchar(ExtractFileDir(out_catalog)), SW_SHOW);
   sleep(1000);
   result:='Распакован '+name_archive;
-end;
-
-procedure TForm1.Button10Click(Sender: TObject);
-var
-  lastfile_arj:string;
-begin
-  if OpenDialog1.Execute then begin
-  lastfile_arj:=OpenDialog1.FileName;
-  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
-  lastfile_arj:=StringReplace(lastfile_arj, 'ARJ', 'XML',[rfReplaceAll, rfIgnoreCase]);
-  run(lastfile_arj,'DELSIGN;');
-  end;
 end;
 
 end.
