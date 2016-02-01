@@ -45,9 +45,11 @@ type
     procedure Button9Click(Sender: TObject);
     procedure TimerProc(Sender: TObject);
     function ARJ_run(in_,out_,arch:string):string;
+    function ARJ_extract(name_archive,out_catalog:string):string;
     function archiveRun311(f:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
+    procedure Button10Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -205,8 +207,8 @@ end;
 procedure TForm1.TimerProc(Sender: TObject);
 var
   ind:integer;
-  sr: TSearchRec;
-  postfix,newname:string;
+  sr,sr1: TSearchRec;
+  postfix,newname,lastfile_arj:string;
 begin
   ind:=(Sender as TTimer).Tag;
   postfix:='_'+StringReplace(TimeToStr(Now), ':', '_',[rfReplaceAll, rfIgnoreCase]);
@@ -215,14 +217,53 @@ begin
     repeat
       if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
           // добавлять уникальное имя файла
-          //if ind=1 then begin
+          // INFO
+          if ind=0 then begin
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-          //end else newname:=TimerData[ind].PATH+sr.Name;
-          message_list(archive(newname,TimerData[ind].arhiv));
-          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-          if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
-          message_list(movefile_(newname,TimerData[ind].target+DEN));
+            message_list(archive(newname,TimerData[ind].arhiv));
+            DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+            if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
+            message_list(movefile_(newname,TimerData[ind].target+DEN));
+          end;
+          //311P
+          if ind = 1 then begin
+           // квитанция от цб
+           if pos('GU_',sr.Name) = 0 then begin
+               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+
+               lastfile_arj:=TimerData[ind].PATH+sr.Name;
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               lastfile_arj:=StringReplace(lastfile_arj, 'ARJ', 'XML',[rfReplaceAll, rfIgnoreCase]);
+               run(lastfile_arj,'DELSIGN;');
+               if FileExists(TimerData[ind].PATH+sr.Name) then DeleteFile(TimerData[ind].PATH+sr.Name);
+
+               DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+               if not DirectoryExists(TimerData[ind].target+DEN) then CreateDir(TimerData[ind].target+DEN);
+               message_list(movefile_(lastfile_arj,TimerData[ind].target+DEN));
+           end;
+           // квитанция от фнс
+           if pos('GU_',sr.Name) <> 0 then begin
+               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+
+               lastfile_arj:=TimerData[ind].PATH+sr.Name;
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+               lastfile_arj:=TimerData[ind].PATH+copy(sr.Name,4,length(sr.Name));
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+
+               if SysUtils.FindFirst(TimerData[ind].PATH+'*.XML', faAnyFile, sr1) = 0 then
+                repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
+                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target+DEN));
+                end;  
+                until FindNext(sr1) <> 0;
+               FindClose(sr1);
+           end;
+          end;
+
       end;
     until FindNext(sr) <> 0;
   FindClose(sr);
@@ -284,7 +325,7 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фтс 311-п ' + f + '-----------');
+      message_list('----------фнс 311-п ' + f + '-----------');
       run(f,BUTTON4_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_311P);');
@@ -371,6 +412,7 @@ comm:=eval;
     else if command = 'LOADKEY_2'  then message_list(Vrb.Load_key_('2'))
     else if command = 'SIGN_1'     then message_list(vrb.Sign(fl,NUM_KEY1,SERIA1))
     else if command = 'SIGN_2'     then message_list('')
+    else if command = 'DELSIGN'    then message_list(vrb.DelSign_(fl))
     else if command = 'RESETKEY_1' then message_list(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1))
     else if command = 'RESETKEY_2' then message_list(vrb.ResetKey_(inttostr(NUM_KEY2) + SERIA2))
     else if command = 'CRYPT_1(KLIKO)' then message_list(vrb.EnCrypt(fl,NUM_KEY1,SERIA1,kliko))
@@ -499,7 +541,7 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фтс 365-п ответы ' + f + '-----------');
+      message_list('----------фнс 365-п ответы ' + f + '-----------');
       run(f,BUTTON5_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
@@ -533,7 +575,7 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фтс 365-п квитанции ' + f + '-----------');
+      message_list('----------фнс 365-п квитанции ' + f + '-----------');
       run(f,BUTTON6_EVAL);
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
@@ -553,6 +595,25 @@ begin
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
   ShowMessage('Транспортный конверт подписан КА');
   message_list(movefile_(lastfile_arj,UTA_365p_OUT));
+  end;
+end;
+
+function TForm1.ARJ_extract(name_archive, out_catalog: string): string;
+begin
+  ShellExecute(0,'open',PChar(ARJ), pchar('e '+name_archive), pchar(ExtractFileDir(out_catalog)), SW_SHOW);
+  sleep(1000);
+  result:='Распакован '+name_archive;
+end;
+
+procedure TForm1.Button10Click(Sender: TObject);
+var
+  lastfile_arj:string;
+begin
+  if OpenDialog1.Execute then begin
+  lastfile_arj:=OpenDialog1.FileName;
+  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+  lastfile_arj:=StringReplace(lastfile_arj, 'ARJ', 'XML',[rfReplaceAll, rfIgnoreCase]);
+  run(lastfile_arj,'DELSIGN;');
   end;
 end;
 

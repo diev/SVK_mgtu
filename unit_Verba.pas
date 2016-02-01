@@ -31,6 +31,7 @@ type
     function Sign(f: string;num_k:integer;ser:string):string;
     function ResetKey_(num_k:string):string;
     procedure DeCrypt(f:string);
+    function DelSign_(f:string):string;
     destructor Destroy; override;
 
     private
@@ -213,6 +214,13 @@ Result:='sign ' + GetIdFromDriver('S') + ' encrypt ' + GetIdFromDriver('E'); // 
   //GetIdFromDev(k_dev,'S') + ' ' + GetIdFromDev(k_dev,'E');
 end;
 
+
+function TVerba.DelSign_(f: string): string;
+begin
+    errcode:=DelSign(pAnsiChar(f),-1);
+    if errcode=NO_ERROR then Result:='Ñíÿòî ÝÖÏ ñ '+f;
+    if errcode<>NO_ERROR then Result:=error(errcode);
+end;
 
 end.
 
