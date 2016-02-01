@@ -262,7 +262,7 @@ begin
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
                   sleep(1000);
-                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target+DEN));
+                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target));
                 end;
                 until FindNext(sr1) <> 0;
                FindClose(sr1);
