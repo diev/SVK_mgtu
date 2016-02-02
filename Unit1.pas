@@ -95,7 +95,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.2 от 01/02/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.2 от 02/02/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -268,6 +268,16 @@ begin
                FindClose(sr1);
            end;
           end;
+
+         if ind = 3 then begin
+            // kliko
+            message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+            run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
+            DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+            if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+            sleep(1000);
+            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+         end;
 
       end;
     until FindNext(sr) <> 0;
