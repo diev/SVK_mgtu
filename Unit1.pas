@@ -95,7 +95,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.2 от 02/02/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.2.2 от 03/02/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -330,6 +330,9 @@ begin
 end;
 {**********************************************************************
     фтс 311-п
+
+    добавлена возможность отправки нескольких архивов, т.к. скрипт формирует
+    отдельные архивы по физлицам и юрлицам
 ************************************************************************}
 procedure TForm1.Button7Click(Sender: TObject);
 var
@@ -346,21 +349,25 @@ begin
   run(f,'SCRIPT(SCRIPT_311P);');
   ShowMessage('Сформирован сводный архив');
   if SysUtils.FindFirst(ARJ_311P_OUT2+'*.arj', faAnyFile, sr) = 0 then
-    lastfile_arj:=ARJ_311P_OUT2 + sr.Name;
-  FindClose(sr);
-  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  ShowMessage('Сводный архив подписан КА');
+    repeat
+      if (sr.Name<>'.') and (sr.Name <>'..') and (sr.Attr<>faDirectory) then begin
+        lastfile_arj:=ARJ_311P_OUT2 + sr.Name;
+        run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+        ShowMessage('Сводный архив '+sr.Name+' подписан КА');
 
-  tk:=inttostr(MonthOf(now));
-  if Length(tk)=1 then tk:='0'+tk;
-  tk:=_311P_TK +'a'+tk+'344.099.arj';
-  // создаем транспортный конверт
-  lastfile_arj:=ARJ_run(lastfile_arj,ARJ_311P_OUT2 + tk,'');
-  ShowMessage('Сформирован транспортный конверт');
-  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
-  ShowMessage('Транспортный конверт подписан КА');
-  message_list(movefile_(lastfile_arj,UTA_311p_OUT));
-  end;
+        tk:=inttostr(MonthOf(now));
+        if Length(tk)=1 then tk:='0'+tk;
+        tk:=_311P_TK +LowerCase(Copy(sr.Name,1,1))+tk+'344.099.arj';
+        // создаем транспортный конверт
+        lastfile_arj:=ARJ_run(lastfile_arj,ARJ_311P_OUT2 + tk,'');
+        ShowMessage('Сформирован '+extractfilename(lastfile_arj)+' транспортный конверт');
+        run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+        ShowMessage('Транспортный конверт '+extractfilename(lastfile_arj)+' подписан КА');
+        message_list(movefile_(lastfile_arj,UTA_311p_OUT));
+      end;
+    until FindNext(sr) <> 0;
+  FindClose(sr);
+  end;{OpenDialog1.Execute}
 end;
 {****************************************************************************
   Логи пишем по принципу открыли файл, записали, закрыли
