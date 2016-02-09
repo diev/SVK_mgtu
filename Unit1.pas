@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, shellapi,
-  Dialogs,inifiles, StdCtrls, ExtCtrls, ComCtrls;
+  Dialogs,inifiles, StdCtrls, ExtCtrls, ComCtrls, Buttons;
 
 type
 
@@ -278,6 +278,59 @@ begin
             sleep(1000);
             message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
          end;
+
+//         if ind = 4 then begin
+          // 365p квитанция от цб  непонятно пока что с ними делать
+
+//         end;
+
+         // 365p
+         {if ind = 4 then begin
+            message_list('365p ------------');
+            newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
+            RenameFile(TimerData[ind].PATH+sr.Name,newname);
+            message_list(archive(newname,TimerData[ind].arhiv));
+
+            lastfile_arj:=newname;
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+            // квитанция от цб
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr1) = 0 then
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  message_list('365p квитанция от цб');
+                  run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
+                  sleep(1000);
+                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target));
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+
+            // квитанция от фнс  
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  message_list('365p квитанция от фнс');                
+                  lastfile_arj:=TimerData[ind].PATH+sr1.Name;
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  sleep(1000);            
+                  if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr2) = 0 then
+                      repeat
+                        if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
+                          run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
+                          sleep(1000);
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target));
+                        end;
+                      until FindNext(sr2) <> 0;
+                    FindClose(sr2);
+
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+
+         end; }
 
       end;
     until FindNext(sr) <> 0;

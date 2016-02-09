@@ -77,7 +77,7 @@ object Form1: TForm1
     end
     object Button1: TButton
       Left = 16
-      Top = 152
+      Top = 184
       Width = 129
       Height = 25
       Caption = #1060#1053#1057' 365-'#1087' '#1086#1090#1074#1077#1090
@@ -86,7 +86,7 @@ object Form1: TForm1
     end
     object Button8: TButton
       Left = 16
-      Top = 184
+      Top = 152
       Width = 129
       Height = 25
       Caption = #1060#1053#1057' 365-'#1087' '#1082#1074#1080#1090#1072#1085#1094#1080#1080
