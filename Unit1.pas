@@ -206,7 +206,7 @@ end;
 procedure TForm1.TimerProc(Sender: TObject);
 var
   ind:integer;
-  sr,sr1: TSearchRec;
+  sr,sr1,sr2: TSearchRec;
   postfix,newname,lastfile_arj:string;
 begin
   ind:=(Sender as TTimer).Tag;
@@ -306,14 +306,14 @@ begin
               until FindNext(sr1) <> 0;
             FindClose(sr1);
 
-            // квитанция от фнс  
+            // квитанция от фнс
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
-                  message_list('365p квитанция от фнс');                
+                  message_list('365p квитанция от фнс');
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
                   message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
-                  sleep(1000);            
+                  sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
                     if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr2) = 0 then
@@ -331,6 +331,46 @@ begin
             FindClose(sr1);
 
          end; }
+
+         // 402p
+         if ind = 4 then begin
+
+            message_list('402p ------------');
+            newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
+            RenameFile(TimerData[ind].PATH+sr.Name,newname);
+            message_list(archive(newname,TimerData[ind].arhiv));
+
+            lastfile_arj:=newname;
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+            // фнс
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  lastfile_arj:=TimerData[ind].PATH+sr1.Name;
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  sleep(1000);
+                  if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'*.xml', faAnyFile, sr2) = 0 then
+                      repeat
+                        if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
+                          run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
+                          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                          if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+                          sleep(1000);
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN));
+                        end;
+                      until FindNext(sr2) <> 0;
+                    FindClose(sr2);
+
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+
+         end;
+
+
 
       end;
     until FindNext(sr) <> 0;
