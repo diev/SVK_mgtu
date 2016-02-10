@@ -95,7 +95,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.2.2 от 03/02/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.4 от 10/02/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -200,6 +200,18 @@ begin
     end;
 
 end;
+{*******************************************************************************
+  Ковентирование DosToWin
+*******************************************************************************}
+function DosToWin(St: string): string;
+var
+  Ch: PChar;
+begin
+  Ch := StrAlloc(Length(St) + 1);
+  OemToAnsi(PChar(St), Ch);
+  Result := Ch;
+  StrDispose(Ch)
+end;
 {**********************************************************************
     обработчик таймеров шедулера
 ************************************************************************}
@@ -207,7 +219,8 @@ procedure TForm1.TimerProc(Sender: TObject);
 var
   ind:integer;
   sr,sr1,sr2: TSearchRec;
-  postfix,newname,lastfile_arj:string;
+  postfix,newname,lastfile_arj,s:string;
+  f:TextFile;
 begin
   ind:=(Sender as TTimer).Tag;
   postfix:='_'+StringReplace(TimeToStr(Now), ':', '_',[rfReplaceAll, rfIgnoreCase]);
@@ -370,6 +383,51 @@ begin
 
          end;
 
+         // 364p
+         if ind = 5 then begin
+          message_list('364p ------------');
+          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));          
+          AssignFile(f,TimerData[ind].PATH+sr.Name);Reset(f);Readln(f,s);s:=DosToWin(s);CloseFile(f);
+          //цб
+          if Pos('Территориальное учреждение',s)<>0 then begin
+            message_list('364p квитанция от цб');
+            run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
+            DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+            if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+            sleep(1000);
+            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+          end else begin //фтс
+            message_list('364p квитанция от фтс');          
+            lastfile_arj:=TimerData[ind].PATH+sr.Name;
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  lastfile_arj:=TimerData[ind].PATH+sr1.Name;
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  sleep(1000);
+                  if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'*.xml', faAnyFile, sr2) = 0 then
+                      repeat
+                        if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
+                          run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
+                          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                          if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+                          sleep(1000);
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN));
+                        end;
+                      until FindNext(sr2) <> 0;
+                    FindClose(sr2);
+
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+          end; //
+
+         end;
 
 
       end;
