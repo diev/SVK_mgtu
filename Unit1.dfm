@@ -100,7 +100,6 @@ object Form1: TForm1
       Height = 25
       Caption = 'Button10'
       TabOrder = 7
-      OnClick = Button10Click
     end
   end
   object StatusBar1: TStatusBar

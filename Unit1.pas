@@ -50,7 +50,6 @@ type
     function archiveRun311(f:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
-    procedure Button10Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -788,11 +787,6 @@ begin
   ShellExecute(0,'open',PChar(ARJ), pchar('e '+name_archive), pchar(ExtractFileDir(out_catalog)), SW_SHOW);
   sleep(1000);
   result:='Распакован '+name_archive;
-end;
-
-procedure TForm1.Button10Click(Sender: TObject);
-begin
-  if OpenDialog1.Execute then run(OpenDialog1.FileName,'LOADKEY_2;DECRYPT;RESETKEY_2;');
 end;
 
 end.
