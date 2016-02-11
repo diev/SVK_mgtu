@@ -30,7 +30,7 @@ type
     function EnCrypt(f: string;num_k:integer;ser:string;fkey:integer):string;
     function Sign(f: string;num_k:integer;ser:string):string;
     function ResetKey_(num_k:string):string;
-    procedure DeCrypt(f:string);
+    function DeCrypt(f:string):string;
     function DelSign_(f:string):string;
     destructor Destroy; override;
 
@@ -109,21 +109,18 @@ end;
   Тип: Внешняя
   Комментарий:
 *******************************************************************************}
-procedure TVerba.DeCrypt(f: string);
-var
-  s : array[0..PUB_ID_LENGTH] of Char;
+function TVerba.DeCrypt(f: string):string;
+//var s : array[0..PUB_ID_LENGTH] of Char;
 begin
-     fKEY:=0;
+{     fKEY:=0;
      errcode:=GetFileSenderID(pAnsiChar(f),PChar(@s));
-     if  errcode<>NO_ERROR then error(errcode)
-     else fKEY:=strtoint(GetCryptoNumberStr(s));
+     if  errcode<>NO_ERROR then result:=error(errcode)
+     else fKEY:=strtoint(GetCryptoNumberStr(s));}
 
-     errcode:=DeCryptFile(pAnsiChar(f), pAnsiChar(f),NUM_KEY1);
-     if  errcode<>NO_ERROR then error(errcode);
-
-    errcode:=DelSign(pAnsiChar(f),-1);
-    if  errcode<>NO_ERROR then error(errcode);
-
+    errcode:=DeCryptFile(pAnsiChar(f), pAnsiChar(f),NUM_KEY2);
+    if errcode<>NO_ERROR then result:=error(errcode);
+    if errcode=NO_ERROR then Result:='Расшифрован '+f;
+    DelSign_(f);
 end;
 {******************************************************************************
    Description: Sign
