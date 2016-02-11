@@ -95,7 +95,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.4 от 10/02/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.5 от 11/02/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -401,7 +401,7 @@ begin
             FindClose(sr1);
 
             // квитанция или входящий от фнс
-            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
+            if SysUtils.FindFirst(TimerData[ind].PATH+'afn*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
