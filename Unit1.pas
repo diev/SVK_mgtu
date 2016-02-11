@@ -31,7 +31,6 @@ type
     ListBox2: TListBox;
     Button1: TButton;
     Button8: TButton;
-    Button10: TButton;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
