@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, shellapi,
-  Dialogs,inifiles, StdCtrls, ExtCtrls, ComCtrls, Buttons;
+  Dialogs,inifiles, StdCtrls, ExtCtrls, ComCtrls, Buttons, Grids, DBGrids,
+  Menus, DB, ADODB;
 
 type
 
@@ -14,23 +15,33 @@ type
 
   TForm1 = class(TForm)
     OpenDialog1: TOpenDialog;
-    GroupBox1: TGroupBox;
-    Button2: TButton;
-    Button4: TButton;
-    Button5: TButton;
-    Button7: TButton;
-    CheckBox1: TCheckBox;
     StatusBar1: TStatusBar;
-    Label1: TLabel;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
-    ListBox1: TListBox;
-    Button9: TButton;
-    Button3: TButton;
-    ListBox2: TListBox;
-    Button1: TButton;
-    Button8: TButton;
+    SGIN: TStringGrid;
+    TabSheet3: TTabSheet;
+    DBGrid1: TDBGrid;
+    MainMenu1: TMainMenu;
+    N1: TMenuItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
+    N4: TMenuItem;
+    asrkeyw1: TMenuItem;
+    N5: TMenuItem;
+    N6: TMenuItem;
+    KLIKO1: TMenuItem;
+    N364P1: TMenuItem;
+    N3111: TMenuItem;
+    N3651: TMenuItem;
+    N3652: TMenuItem;
+    SGIN2: TStringGrid;
+    ADOConnection1: TADOConnection;
+    DataSource1: TDataSource;
+    N7: TMenuItem;
+    ADOQuery1: TADOQuery;
+    ADOQuery2: TADOQuery;
+    N1231: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -38,7 +49,7 @@ type
     function movefile_(fl,target:string):string;
     function run(fl,eval:string):string;
     procedure Log(mes: string);
-    procedure message_list(ms:string);
+    procedure message_list(ms,file_name:string);
     procedure Button2Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button7Click(Sender: TObject);
@@ -49,6 +60,13 @@ type
     function archiveRun311(f:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
+    function DBfirstInsert(fn,arj,tk:string):string;
+    function DBfirstEdit(arj,tk:string):string;
+    function DBKvit(id,fn,arj,tk:string;n:integer):string;
+    function DBfin_forKvit(f:string):string;
+    function readKvit(f:string):string;
+    procedure DBGrid1DblClick(Sender: TObject);
+    procedure N1231Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -62,6 +80,7 @@ type
     TimerPool:array of TTimer;
     TimerData:array of StrTD;
     ARJ:string;
+    ind_SG,ind_SG2:integer;
   public
   end;
 
@@ -73,7 +92,7 @@ var
 
 implementation
 
-uses unit_Verba, DateUtils;
+uses unit_Verba, DateUtils, Unit2, Math;
 
 {$R *.dfm}
 {*******************************************************************************
@@ -125,7 +144,7 @@ begin
 
   DIR             :=inf.ReadString('DIRECTORY','DIR','');
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
-  LOGI            :=inf.ReadBool('COMMON','LOGI',false);  CheckBox1.Checked:=LOGI;
+  LOGI            :=inf.ReadBool('COMMON','LOGI',false);
   ARJ             :=inf.ReadString('COMMON','ARJ','');
 
   BUTTON1_EVAL   :=inf.ReadString('COMMON','BUTTON1_EVAL','');
@@ -172,8 +191,20 @@ begin
  {переинициализируется при каждом копировании}
  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
 
-  Label1.Caption:='Мониторинг запущен';
-  message_list('Начало обработки');
+  SGIN.Rows[0].Add('Дата');
+  SGIN.Rows[0].Add('Время');
+  SGIN.Rows[0].Add('Информация');
+  SGIN.Rows[0].Add('Файл');
+  ind_SG:=1;
+  message_list('Начало обработки','');
+
+  SGIN2.Rows[0].Add('Путь');
+  SGIN2.Rows[0].Add('Маска');
+  SGIN2.Rows[0].Add('Архив');
+  SGIN2.Rows[0].Add('Назначение');
+  SGIN2.Rows[0].Add('Интервал');
+  ind_SG2:=1;
+
   vrb:=TVerba.Create;
 
 { разбор шаблонов }
@@ -195,9 +226,31 @@ begin
       TimerPool[kt].enabled:=true;
 
       // добавляем на форму
-      ListBox2.Items.Add(TimerData[kt].path+TimerData[kt].maska+';'+TimerData[kt].arhiv+';'+TimerData[kt].target+';'+inttostr(TimerPool[kt].Interval div 1000));
+      SGIN2.Rows[ind_SG2].Add(TimerData[kt].path);
+      SGIN2.Rows[ind_SG2].Add(TimerData[kt].maska);
+      SGIN2.Rows[ind_SG2].Add(TimerData[kt].arhiv);
+      SGIN2.Rows[ind_SG2].Add(TimerData[kt].target);
+      SGIN2.Rows[ind_SG2].Add(inttostr(TimerPool[kt].Interval div 1000));
+      inc(ind_SG2);
+
       inc(kt);
     end;
+
+ try
+//   ADOConnection1.ConnectionString:='FILE NAME=D:\Verba\SVK_mgtu\connect.udl';
+   ADOConnection1.Connected:=true;
+   ADOQuery1.SQL.Clear;
+   ADOQuery1.SQL.Add('select * from docs order by id');
+   ADOQuery1.Close;
+   ADOQuery1.Open;
+ except
+    on E: Exception do begin
+      Log('Ошибка соединения с БД: ' + e.Message);
+      ShowMessage('Ошибка соединения с БД: ' + e.Message);
+      Halt;
+    end;  
+ end;
+
 
 end;
 {*******************************************************************************
@@ -233,20 +286,20 @@ begin
           if ind=0 then begin
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv));
+            message_list(archive(newname,TimerData[ind].arhiv),sr.Name);
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
-            message_list(movefile_(newname,TimerData[ind].target+DEN));
+            message_list(movefile_(newname,TimerData[ind].target+DEN),sr.Name);
           end;
           //311P
           if ind = 1 then begin
            // квитанция от цб
            if pos('GU_',sr.Name) = 0 then begin
-               message_list('311p квитанция от цб');
-               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+               message_list('311p квитанция от цб','');
+               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),sr.Name);
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),sr.Name);
                lastfile_arj:=StringReplace(lastfile_arj, 'ARJ', 'XML',[rfReplaceAll, rfIgnoreCase]);
                run(lastfile_arj,'DELSIGN;');
                if FileExists(TimerData[ind].PATH+sr.Name) then DeleteFile(TimerData[ind].PATH+sr.Name);
@@ -254,20 +307,20 @@ begin
                DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
                sleep(1000);
-               message_list(movefile_(lastfile_arj,TimerData[ind].target+DEN));
+               message_list(movefile_(lastfile_arj,TimerData[ind].target+DEN),lastfile_arj);
            end;
           end;
           if ind = 2 then begin
            // квитанция от фнс
            if pos('GU_',sr.Name) <> 0 then begin
-               message_list('311p квитанция от фнс');
-               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+               message_list('311p квитанция от фнс','');
+               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),sr.Name);
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),sr.Name);
                if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
                lastfile_arj:=TimerData[ind].PATH+copy(sr.Name,4,length(sr.Name));
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),lastfile_arj);
                if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
                if SysUtils.FindFirst(TimerData[ind].PATH+'*.XML', faAnyFile, sr1) = 0 then
@@ -275,7 +328,7 @@ begin
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
                   sleep(1000);
-                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target));
+                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,TimerData[ind].target),sr1.Name);
                 end;
                 until FindNext(sr1) <> 0;
                FindClose(sr1);
@@ -284,31 +337,33 @@ begin
 
          if ind = 3 then begin
             // kliko
-            message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
+            message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),sr.Name);
             run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
             sleep(1000);
-            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN),sr.Name);
+//            id:=DBfin_forKvit(readKvit(sr.Name));
+//            if id<>'0' then DBKvit(ID,sr.Name,'-','-',1);
          end;
 
          // 402p
          if ind = 4 then begin
 
-            message_list('402p ------------');
+            message_list('402p ------------','');
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv));
+            message_list(archive(newname,TimerData[ind].arhiv),sr.Name);
 
             lastfile_arj:=newname;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),sr.Name);
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
             // фнс
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -319,7 +374,7 @@ begin
                           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
                           sleep(1000);
-                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN));
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN),'');
                         end;
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
@@ -332,28 +387,28 @@ begin
 
          // 364p
          if ind = 5 then begin
-          message_list('364p ------------');
-          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));          
+          message_list('364p ------------','');
+          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),'');
           AssignFile(f,TimerData[ind].PATH+sr.Name);Reset(f);Readln(f,s);s:=DosToWin(s);CloseFile(f);
           //цб
           if Pos('Территориальное учреждение',s)<>0 then begin
-            message_list('364p квитанция от цб');
+            message_list('364p квитанция от цб','');
             run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
             sleep(1000);
-            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN));
+            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN),'');
           end else begin //фтс
-            message_list('364p квитанция от фтс');          
+            message_list('364p квитанция от фтс','');
             lastfile_arj:=TimerData[ind].PATH+sr.Name;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -364,7 +419,7 @@ begin
                           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
                           sleep(1000);
-                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN));
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target+DEN),'');
                         end;
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
@@ -378,24 +433,24 @@ begin
 
          // 365p
         if ind = 6 then begin
-            message_list('365p ------------');
+            message_list('365p ------------','');
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv));
+            message_list(archive(newname,TimerData[ind].arhiv),'');
 
             lastfile_arj:=newname;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
             // квитанция от цб
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
-                  message_list('365p квитанция от цб');
+                  message_list('365p квитанция от цб','');
                   run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
                   DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                   if not DirectoryExists('Z:\CB_kvit\'+DEN) then ForceDirectories('Z:\CB_kvit\'+DEN);    // danger !!!!!!!!!
                   sleep(1000);
-                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,'Z:\CB_kvit\'+DEN));
+                  message_list(movefile_(TimerData[ind].PATH+sr1.Name,'Z:\CB_kvit\'+DEN),'');
                 end;
               until FindNext(sr1) <> 0;
             FindClose(sr1);
@@ -405,17 +460,17 @@ begin
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
                     if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr2) = 0 then
                       repeat
                         if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
-                          message_list('365p квитанция от фнс');                        
+                          message_list('365p квитанция от фнс','');
                           run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
                           sleep(1000);
-                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target));
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target),'');
                         end;
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
@@ -424,10 +479,10 @@ begin
                     if SysUtils.FindFirst(TimerData[ind].PATH+'*.vrb', faAnyFile, sr2) = 0 then
                       repeat
                         if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
-                          message_list('365p ВНИМАНИЕ ВХОДЯЩИЙ от фнс');                        
+                          message_list('365p ВНИМАНИЕ ВХОДЯЩИЙ от фнс','');
                           run(TimerData[ind].PATH+sr2.Name,'LOADKEY_2;DECRYPT;RESETKEY_2;');
                           sleep(2000);
-                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target));
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,TimerData[ind].target),'');
                         end;
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
@@ -450,8 +505,11 @@ procedure TForm1.Button2Click(Sender: TObject);
 var
   f:string;
 begin
-  if OpenDialog1.Execute then begin f:=OpenDialog1.FileName; message_list('----------- Отчетность kliko ' + f + '------------');
+  if OpenDialog1.Execute then begin
+    f:=OpenDialog1.FileName;
+    message_list('ОТЧЕТНОСТЬ KLIKO',ExtractFileName(f));
     run(f,BUTTON1_EVAL);
+    DBfirstInsert(ExtractFileName(f),'-','-');
  end;
 end;
 {**********************************************************************
@@ -466,8 +524,9 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фтс 364-п ' + f + '-----------');
+      message_list('ПОЛОЖЕНИЕ 364П ФТС',f);
       run(f,BUTTON2_EVAL);
+      DBfirstInsert(ExtractFileName(f),'-','-');      
     end;
   run(f,'SCRIPT(SCRIPT_364P);');
   ShowMessage('Сформирован сводный архив');
@@ -485,7 +544,7 @@ begin
   ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
   ShowMessage('Транспортный конверт подписан КА');
-  message_list(movefile_(lastfile_arj,UTA_364p_OUT));
+  message_list(movefile_(lastfile_arj,UTA_364p_OUT),'');
   end;
 end;
 {**********************************************************************
@@ -503,8 +562,9 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фнс 311-п ' + f + '-----------');
+      message_list('ПОЛОЖЕНИЕ 311П ФНС',f);
       run(f,BUTTON4_EVAL);
+      DBfirstInsert(ExtractFileName(f),'-','-');      
     end;
   run(f,'SCRIPT(SCRIPT_311P);');
   ShowMessage('Сформирован сводный архив');
@@ -523,7 +583,7 @@ begin
         ShowMessage('Сформирован '+extractfilename(lastfile_arj)+' транспортный конверт');
         run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
         ShowMessage('Транспортный конверт '+extractfilename(lastfile_arj)+' подписан КА');
-        message_list(movefile_(lastfile_arj,UTA_311p_OUT));
+        message_list(movefile_(lastfile_arj,UTA_311p_OUT),'');
       end;
     until FindNext(sr) <> 0;
   FindClose(sr);
@@ -561,9 +621,13 @@ end;
 {**********************************************************************
     вывод на лмст и в лог
 ************************************************************************}
-procedure TForm1.message_list(ms: string);
+procedure TForm1.message_list(ms,file_name: string);
 begin
-  ListBox1.Items.Add(DateTimeToStr(now)+' '+ms);
+  SGIN.Rows[ind_SG].Add(Datetostr(date));
+  SGIN.Rows[ind_SG].Add(timetostr(time));
+  SGIN.Rows[ind_SG].Add(ms);
+  SGIN.Rows[ind_SG].Add(file_name);
+  inc(ind_SG);
   Log(ms);
 end;
 {**********************************************************************
@@ -571,7 +635,7 @@ end;
 ************************************************************************}
 procedure TForm1.Button3Click(Sender: TObject);
 begin
-  message_list(vrb.checkKey(''));
+  message_list(vrb.checkKey(''),'');
 end;
 {****************************************************************************
    asrkeyw.exe
@@ -590,16 +654,16 @@ begin
 comm:=eval;
   while Pos(';',comm) <> 0 do begin
     command:= cut(comm,';');
-    if      command = 'LOADKEY_1'  then message_list(Vrb.Load_key_('1'))
-    else if command = 'LOADKEY_2'  then message_list(Vrb.Load_key_('2'))
-    else if command = 'SIGN_1'     then message_list(vrb.Sign(fl,NUM_KEY1,SERIA1))
-    else if command = 'SIGN_2'     then message_list('')
-    else if command = 'DELSIGN'    then message_list(vrb.DelSign_(fl))
-    else if command = 'RESETKEY_1' then message_list(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1))
-    else if command = 'RESETKEY_2' then message_list(vrb.ResetKey_(inttostr(NUM_KEY2) + SERIA2))
-    else if command = 'CRYPT_1(KLIKO)' then message_list(vrb.EnCrypt(fl,NUM_KEY1,SERIA1,kliko))
-    else if command = 'CRYPT_2(FTS)' then message_list(vrb.EnCrypt(fl,NUM_KEY2,SERIA2,fts))
-    else if command = 'DECRYPT' then message_list(vrb.DeCrypt(fl))
+    if      command = 'LOADKEY_1'  then Log(Vrb.Load_key_('1'))
+    else if command = 'LOADKEY_2'  then Log(Vrb.Load_key_('2'))
+    else if command = 'SIGN_1'     then Log(vrb.Sign(fl,NUM_KEY1,SERIA1))
+    else if command = 'SIGN_2'     then Log('')
+    else if command = 'DELSIGN'    then Log(vrb.DelSign_(fl))
+    else if command = 'RESETKEY_1' then Log(vrb.ResetKey_(inttostr(NUM_KEY1) + SERIA1))
+    else if command = 'RESETKEY_2' then Log(vrb.ResetKey_(inttostr(NUM_KEY2) + SERIA2))
+    else if command = 'CRYPT_1(KLIKO)' then Log(vrb.EnCrypt(fl,NUM_KEY1,SERIA1,kliko))
+    else if command = 'CRYPT_2(FTS)' then Log(vrb.EnCrypt(fl,NUM_KEY2,SERIA2,fts))
+    else if command = 'DECRYPT' then Log(vrb.DeCrypt(fl))
     else if pos('MOVE',command)<>0 then begin
             parametr:= Copy(command,pos('(',command)+1,length(command));
             Delete(parametr,length(parametr),1);
@@ -610,7 +674,7 @@ comm:=eval;
             else if parametr='ARJ_365P_OUT' then target:=ARJ_365P_OUT
             else if parametr='ARJ_365P_OUT_kvit' then target:=ARJ_365P_OUT_kvit
             else target:=parametr;
-            message_list(movefile_(fl,target));
+            message_list(movefile_(fl,target),'');
           end
     else if pos('ARCHIVE',command)<>0 then begin
             parametr:= Copy(command,pos('(',command)+1,length(command));
@@ -621,7 +685,7 @@ comm:=eval;
             else if parametr='_311P_OUT_ARHIV' then target:=_311P_OUT_ARHIV
             else if parametr='_365P_OUT_ARHIV' then target:=_365P_OUT_ARHIV
             else target:=parametr;
-            message_list(archive(fl,target));
+            Log(archive(fl,target));
           end
     else if pos('SCRIPT',command)<>0 then begin
             parametr:= Copy(command,pos('(',command)+1,length(command));
@@ -632,7 +696,7 @@ comm:=eval;
             else if parametr='SCRIPT_365P' then script_name:=SCRIPT_365P
             else script_name:=parametr;
             ShellExecute(0,'open',PChar(script_name), pchar(''), pchar(ExtractFileDir(script_name)), SW_SHOW);
-            message_list('запущен скрипт ' + script_name);
+            Log('запущен скрипт ' + script_name);
          end;
   end;
 end;
@@ -724,8 +788,9 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фнс 365-п ответы ' + f + '-----------');
+      message_list('ПОЛОЖЕНИЕ 365П ответы',f);
       run(f,BUTTON5_EVAL);
+      DBfirstInsert(ExtractFileName(f),'-','-');
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
   ShowMessage('Сформирован сводный архив');
@@ -743,7 +808,7 @@ begin
   ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
   ShowMessage('Транспортный конверт подписан КА');
-  message_list(movefile_(lastfile_arj,UTA_365p_OUT));
+  message_list(movefile_(lastfile_arj,UTA_365p_OUT),'');
   end;
 end;
 {**********************************************************************
@@ -758,8 +823,9 @@ begin
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
-      message_list('----------фнс 365-п квитанции ' + f + '-----------');
+      message_list('ПОЛОЖЕНИЕ 365П квитанции',f);
       run(f,BUTTON6_EVAL);
+      DBfirstInsert(ExtractFileName(f),'-','-');
     end;
   run(f,'SCRIPT(SCRIPT_365P);');
   ShowMessage('Сформирован сводный архив');
@@ -777,7 +843,7 @@ begin
   ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
   ShowMessage('Транспортный конверт подписан КА');
-  message_list(movefile_(lastfile_arj,UTA_365p_OUT));
+  message_list(movefile_(lastfile_arj,UTA_365p_OUT),'');
   end;
 end;
 
@@ -786,6 +852,86 @@ begin
   ShellExecute(0,'open',PChar(ARJ), pchar('e '+name_archive), pchar(ExtractFileDir(out_catalog)), SW_SHOW);
   sleep(1000);
   result:='Распакован '+name_archive;
+end;
+
+function TForm1.DBfirstInsert(fn, arj, tk: string): string;
+begin
+  ADOQuery1.Insert;
+  ADOQuery1.FieldByName('data').AsDateTime:=now;
+  ADOQuery1.FieldByName('file_name').AsString:=fn;
+  ADOQuery1.FieldByName('svod_arj').AsString:=arj;
+  ADOQuery1.FieldByName('tk').AsString:=tk;
+  ADOQuery1.Post;
+end;
+
+function TForm1.DBfirstEdit(arj, tk: string): string;
+begin
+  ADOQuery1.Edit;
+  ADOQuery1.FieldByName('svod_arj').AsString:=arj;
+  ADOQuery1.FieldByName('tk').AsString:=tk;
+  ADOQuery1.Post;
+end;
+
+function TForm1.DBKvit(id,fn, arj, tk: string;n:integer): string; // добавить в логи по id
+begin
+  ADOQuery1.Locate('id',id,[]);
+  ADOQuery1.Edit;
+  if n = 1 then begin
+    ADOQuery1.FieldByName('kvit1_data').AsDateTime:=now;
+    ADOQuery1.FieldByName('kvit1_file').AsString:=fn;
+    ADOQuery1.FieldByName('kvit1_svod_arj').AsString:=arj;
+    ADOQuery1.FieldByName('kvit1_tk').AsString:=tk;
+  end;
+  if n = 2 then begin
+    ADOQuery1.FieldByName('kvit2_data').AsDateTime:=now;
+    ADOQuery1.FieldByName('kvit2_file').AsString:=fn;
+    ADOQuery1.FieldByName('kvit2_svod_arj').AsString:=arj;
+    ADOQuery1.FieldByName('kvit2_tk').AsString:=tk;
+  end;
+  if n = 3 then begin
+    ADOQuery1.FieldByName('kvit3_data').AsDateTime:=now;
+    ADOQuery1.FieldByName('kvit3_file').AsString:=fn;
+    ADOQuery1.FieldByName('kvit3_svod_arj').AsString:=arj;
+    ADOQuery1.FieldByName('kvit3_tk').AsString:=tk;
+  end;
+  ADOQuery1.Post;
+end;
+
+procedure TForm1.DBGrid1DblClick(Sender: TObject);
+begin
+  Form2.ShowModal;  
+end;
+{**********************************************************************
+    read kvit
+    result file name original
+************************************************************************}
+function TForm1.readKvit(f: string): string;
+begin
+  Result:='123.FB2';
+end;
+{**********************************************************************
+    rfind id from docs
+************************************************************************}
+function TForm1.DBfin_forKvit(f: string): string;
+begin
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.Add('select id from docs where file_name = :f'); // добавить дату до текущей
+  ADOQuery2.Parameters.ParamByName('f').Value:=f;
+  ADOQuery2.Close;
+  ADOQuery2.Open;
+
+  if ADOQuery2.RecordCount > 0 then Result:=ADOQuery2.FieldByName('id').AsString
+  else Result:='0';
+end;
+
+procedure TForm1.N1231Click(Sender: TObject);
+var
+  id:string;
+begin
+  id:=DBfin_forKvit(readKvit(''));
+  if id<>'0' then DBKvit(ID,'kvit_001.txt','123.arj','tza02.099',1);
+  if id<>'0' then DBKvit(ID,'kvit_002.txt','1232.arj','tza022.099',2);
+  if id<>'0' then DBKvit(ID,'kvit_003.txt','-','-',3);
 end;
 
 end.
