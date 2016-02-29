@@ -304,7 +304,7 @@ begin
           if ind=0 then begin
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+            Log(archive(newname,TimerData[ind].arhiv));
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
             message_list(movefile_(newname,TimerData[ind].target+DEN),ExtractFileName(sr.Name));
@@ -314,10 +314,10 @@ begin
            // квитанция от цб
            if pos('GU_',sr.Name) = 0 then begin
                message_list('311p квитанция от цб','');
-               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+               Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),ExtractFileName(sr.Name));
+               Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                lastfile_arj:=StringReplace(lastfile_arj, 'ARJ', 'XML',[rfReplaceAll, rfIgnoreCase]);
                run(lastfile_arj,'DELSIGN;');
                if FileExists(TimerData[ind].PATH+sr.Name) then DeleteFile(TimerData[ind].PATH+sr.Name);
@@ -332,13 +332,13 @@ begin
            // квитанция от фнс
            if pos('GU_',sr.Name) <> 0 then begin
                message_list('311p квитанция от фнс','');
-               message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+               Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
 
                lastfile_arj:=TimerData[ind].PATH+sr.Name;
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),ExtractFileName(sr.Name));
+               Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
                lastfile_arj:=TimerData[ind].PATH+copy(sr.Name,4,length(sr.Name));
-               message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),ExtractFileName(lastfile_arj));
+               Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
                if SysUtils.FindFirst(TimerData[ind].PATH+'*.XML', faAnyFile, sr1) = 0 then
@@ -355,7 +355,7 @@ begin
 
          if ind = 3 then begin
             // kliko
-            message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+            Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
             run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
@@ -371,17 +371,17 @@ begin
             message_list('402p ------------','');
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+            Log(archive(newname,TimerData[ind].arhiv));
 
             lastfile_arj:=newname;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),ExtractFileName(sr.Name));
+            Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
             // фнс
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
+                  Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -406,7 +406,7 @@ begin
          // 364p
          if ind = 5 then begin
           message_list('364p ------------','');
-          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),'');
+          Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
           AssignFile(f,TimerData[ind].PATH+sr.Name);Reset(f);Readln(f,s);s:=DosToWin(s);CloseFile(f);
           //цб
           if Pos('Территориальное учреждение',s)<>0 then begin
@@ -419,14 +419,14 @@ begin
           end else begin //фтс
             message_list('364p квитанция от фтс','');
             lastfile_arj:=TimerData[ind].PATH+sr.Name;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
+            Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
+                  Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -454,10 +454,10 @@ begin
             message_list('365p ------------','');
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
             RenameFile(TimerData[ind].PATH+sr.Name,newname);
-            message_list(archive(newname,TimerData[ind].arhiv),'');
+            Log(archive(newname,TimerData[ind].arhiv));
 
             lastfile_arj:=newname;
-            message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
+            Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
             // квитанция от цб
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr1) = 0 then
@@ -478,7 +478,7 @@ begin
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
-                  message_list(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)),'');
+                  Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                   sleep(1000);
                   if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -512,7 +512,7 @@ begin
          end; 
         if ind = 7 then begin
           message_list('transfer квитанция ------------','');
-          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),ExtractFileName(sr.Name));
+          Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
           run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
@@ -870,7 +870,7 @@ begin
   ShowMessage('Транспортный конверт подписан КА');
   if id<>'0' then DBfirstEdit(id,'-',ExtractFileName(lastfile_arj));
 
-  message_list(movefile_(lastfile_arj,UTA_TRANSFER_OUT),'');
+  message_list(movefile_(lastfile_arj,UTA_TRANSFER_OUT),ExtractFileName(lastfile_arj));
   end;
 end;
 {**********************************************************************
