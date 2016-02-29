@@ -47,8 +47,8 @@ object Form1: TForm1
         ColWidths = (
           64
           64
-          424
-          117
+          520
+          184
           64)
       end
     end
