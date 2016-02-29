@@ -510,7 +510,15 @@ begin
             FindClose(sr1);
 
          end; 
-
+        if ind = 7 then begin
+          message_list('transfer квитанция ------------','');
+          message_list(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv),sr.Name);
+          run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
+          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+          if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
+          sleep(1000);
+          message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN),sr.Name);
+        end;
 
       end;
     until FindNext(sr) <> 0;
