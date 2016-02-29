@@ -290,7 +290,7 @@ object Form2: TForm2
     object DBText7: TDBText
       Left = 72
       Top = 96
-      Width = 65
+      Width = 217
       Height = 17
       DataField = 'tk'
       DataSource = Form1.DataSource1

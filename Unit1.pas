@@ -62,13 +62,14 @@ type
     function DBfirstInsert(fn,arj,tk:string):string;
     procedure DBGrid1DblClick(Sender: TObject);
     procedure N32311Click(Sender: TObject);
+    function DBfirstEdit(id, arj, tk: string): string;    
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
     ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,UTA_364P_OUT,_364P_TK,ARJ_364P_OUT2,
     ARJ_311P_OUT,_311P_OUT_ARHIV,SCRIPT_311P,UTA_311P_OUT,_311P_TK,ARJ_311P_OUT2,
     ARJ_365P_OUT,_365P_OUT_ARHIV,SCRIPT_365P,UTA_365P_OUT,_365P_TK,ARJ_365P_OUT2,ARJ_365P_OUT_kvit,
-    UTA_TRANSFER_OUT,
+    TRANSFER_OUT_ARHIV,UTA_TRANSFER_OUT,
     PATH_LOGI,
     DEN:string;
     LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL,BUTTON5_EVAL,BUTTON6_EVAL,BUTTON7_EVAL:string;
@@ -138,6 +139,7 @@ begin
   _365P_TK        :=inf.ReadString('DIRECTORY','_365P_TK','');
   ARJ_365P_OUT_kvit:=inf.ReadString('DIRECTORY','ARJ_365P_OUT_kvit','');
 
+  TRANSFER_OUT_ARHIV:=inf.ReadString('DIRECTORY','TRANSFER_OUT_ARHIV','');
   UTA_TRANSFER_OUT:=inf.ReadString('DIRECTORY','UTA_TRANSFER_OUT','');
 
   DIR             :=inf.ReadString('DIRECTORY','DIR','');
@@ -700,6 +702,7 @@ comm:=eval;
             else if parametr='_364P_OUT_ARHIV' then target:=_364P_OUT_ARHIV
             else if parametr='_311P_OUT_ARHIV' then target:=_311P_OUT_ARHIV
             else if parametr='_365P_OUT_ARHIV' then target:=_365P_OUT_ARHIV
+            else if parametr='TRANSFER_OUT_ARHIV' then target:=TRANSFER_OUT_ARHIV
             else target:=parametr;
             Log(archive(fl,target));
           end
@@ -820,22 +823,44 @@ end;
 ************************************************************************}
 procedure TForm1.N32311Click(Sender: TObject);
 var
-  f,dir,lastfile_arj:string;
-  i:integer;
+  f,dir,lastfile_arj,mes,id:string;
+  i:integer;  Stream: TFileStream;
 begin
+// решить вопрос с отчетной датой
   if OpenDialog1.Execute then begin
     for i:=0 to OpenDialog1.Files.Count - 1 do begin
       f:=OpenDialog1.Files.Strings[i];
       dir:=ExtractFilePath(f);
       message_list('TRANSFER',ExtractFileName(f));
-//      run(f,BUTTON7_EVAL);
-      DBfirstInsert(ExtractFileName(f),'-','-');
+      run(f,BUTTON7_EVAL);
+      id:=DBfirstInsert(ExtractFileName(f),'-','-');
     end;
+  // создаем Заголовок.xml
+  Stream := TFileStream.Create(dir+'Заголовок.xml',fmCreate);
+  try
+    Stream.Seek(0, soFromEnd);mes:='';
+    mes:='<?xml version="1.0" encoding="windows-1251" ?> '+#10;
+    mes:=mes+'<Заголовок>'+#10;
+    mes:=mes+'  <Сведения Код="VBKClose" >'+#10;
+    mes:=mes+'    <Отправитель РегНомер="1067/3" Наименование="Филиал ОАО БайкалИнвестБанк в г.Москва" />'+#10;
+    mes:=mes+'    <Данные ОтчетнаяДата="****-**-**" >'+#10;
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      mes:=mes+'      <Файл Имя="'+ ExtractFileName(f)+'" />'+#10;
+    end;
+    mes:=mes+'    </Данные>'+#10;
+    mes:=mes+'  </Сведения>'+#10;
+    mes:=mes+'</Заголовок>'+#10;
+    Stream.WriteBuffer(Pointer(mes)^, Length(mes));
+  finally
+    Stream.Free;
+  end;
   // создаем транспортный конверт
-  lastfile_arj:=ARJ_run(dir+'*.arj','c:\temp\TRANSFER.ARJ','');
+  lastfile_arj:=ARJ_run(dir+'*.*',dir+'TRANSFER.ARJ','');
   ShowMessage('Сформирован транспортный конверт');
   run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
   ShowMessage('Транспортный конверт подписан КА');
+  if id<>'0' then DBfirstEdit(id,'-',ExtractFileName(lastfile_arj));
 
   message_list(movefile_(lastfile_arj,UTA_TRANSFER_OUT),'');
   end;
@@ -860,6 +885,28 @@ begin
   ADOQuery1.FieldByName('svod_arj').AsString:=arj;
   ADOQuery1.FieldByName('tk').AsString:=tk;
   ADOQuery1.Post;
+
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.Add('select top 1 id from docs order by id desc');
+  ADOQuery2.Close;
+  ADOQuery2.Open;
+
+  if ADOQuery2.RecordCount > 0 then begin
+    ADOQuery2.First;
+    Result:=ADOQuery2.FieldByName('id').AsString;
+  end
+  else Result:='0';
+end;
+{**********************************************************************
+    пишем по первому файлу
+************************************************************************}
+function TForm1.DBfirstEdit(id, arj, tk: string): string;
+begin
+  ADOQuery1.Locate('id',id,[]);
+  ADOQuery1.Edit;
+  ADOQuery1.FieldByName('svod_arj').AsString:=arj;
+  ADOQuery1.FieldByName('tk').AsString:=tk;
+  ADOQuery1.Post;
 end;
 {**********************************************************************
     окно деталей
@@ -869,16 +916,7 @@ begin
   Form2.ShowModal;
 end;
 
-
-{function TForm1.DBfirstEdit(arj, tk: string): string;
-begin
-  ADOQuery1.Edit;
-  ADOQuery1.FieldByName('svod_arj').AsString:=arj;
-  ADOQuery1.FieldByName('tk').AsString:=tk;
-  ADOQuery1.Post;
-end;
-
-function TForm1.DBKvit(id,fn, arj, tk: string;n:integer): string; // добавить в логи по id
+{function TForm1.DBKvit(id,fn, arj, tk: string;n:integer): string; // добавить в логи по id
 begin
   ADOQuery1.Locate('id',id,[]);
   ADOQuery1.Edit;
