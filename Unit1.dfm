@@ -199,9 +199,9 @@ object Form1: TForm1
         Caption = '365'#1055' '#1086#1090#1074#1077#1090
         OnClick = Button1Click
       end
-      object N1231: TMenuItem
-        Caption = '123'
-        OnClick = N1231Click
+      object N32311: TMenuItem
+        Caption = #1042#1077#1076#1086#1084#1086#1089#1090#1080
+        OnClick = N32311Click
       end
     end
     object N2: TMenuItem
@@ -223,7 +223,6 @@ object Form1: TForm1
     end
   end
   object ADOConnection1: TADOConnection
-    Connected = True
     ConnectionString = 
       'Provider=Microsoft.ACE.OLEDB.12.0;Data Source=d:\Verba\SVK_mgtu\' +
       'base.mdb;Persist Security Info=False;'

@@ -41,7 +41,7 @@ type
     N7: TMenuItem;
     ADOQuery1: TADOQuery;
     ADOQuery2: TADOQuery;
-    N1231: TMenuItem;
+    N32311: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -57,25 +57,21 @@ type
     procedure TimerProc(Sender: TObject);
     function ARJ_run(in_,out_,arch:string):string;
     function ARJ_extract(name_archive,out_catalog:string):string;
-    function archiveRun311(f:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
     function DBfirstInsert(fn,arj,tk:string):string;
-    function DBfirstEdit(arj,tk:string):string;
-    function DBKvit(id,fn,arj,tk:string;n:integer):string;
-    function DBfin_forKvit(f:string):string;
-    function readKvit(f:string):string;
     procedure DBGrid1DblClick(Sender: TObject);
-    procedure N1231Click(Sender: TObject);
+    procedure N32311Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
     ARJ_364P_OUT,_364P_OUT_ARHIV,SCRIPT_364P,UTA_364P_OUT,_364P_TK,ARJ_364P_OUT2,
     ARJ_311P_OUT,_311P_OUT_ARHIV,SCRIPT_311P,UTA_311P_OUT,_311P_TK,ARJ_311P_OUT2,
     ARJ_365P_OUT,_365P_OUT_ARHIV,SCRIPT_365P,UTA_365P_OUT,_365P_TK,ARJ_365P_OUT2,ARJ_365P_OUT_kvit,
+    UTA_TRANSFER_OUT,
     PATH_LOGI,
     DEN:string;
-    LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL,BUTTON5_EVAL,BUTTON6_EVAL:string;
+    LOGI:Boolean;BUTTON1_EVAL,BUTTON2_EVAL,BUTTON3_EVAL,BUTTON4_EVAL,BUTTON5_EVAL,BUTTON6_EVAL,BUTTON7_EVAL:string;
     DIR:string;
     TimerPool:array of TTimer;
     TimerData:array of StrTD;
@@ -142,6 +138,8 @@ begin
   _365P_TK        :=inf.ReadString('DIRECTORY','_365P_TK','');
   ARJ_365P_OUT_kvit:=inf.ReadString('DIRECTORY','ARJ_365P_OUT_kvit','');
 
+  UTA_TRANSFER_OUT:=inf.ReadString('DIRECTORY','UTA_TRANSFER_OUT','');
+
   DIR             :=inf.ReadString('DIRECTORY','DIR','');
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
   LOGI            :=inf.ReadBool('COMMON','LOGI',false);
@@ -153,6 +151,7 @@ begin
   BUTTON4_EVAL   :=inf.ReadString('COMMON','BUTTON4_EVAL','');
   BUTTON5_EVAL   :=inf.ReadString('COMMON','BUTTON5_EVAL','');
   BUTTON6_EVAL   :=inf.ReadString('COMMON','BUTTON6_EVAL','');
+  BUTTON7_EVAL   :=inf.ReadString('COMMON','BUTTON7_EVAL','');
 
 // verba ========================================================
 
@@ -237,7 +236,24 @@ begin
     end;
 
  try
-//   ADOConnection1.ConnectionString:='FILE NAME=D:\Verba\SVK_mgtu\connect.udl';
+   ADOConnection1.ConnectionString:='Provider=Microsoft.ACE.OLEDB.12.0;'+
+                                    'User ID=Admin;'+
+                                    'Data Source='+ExtractFilePath(Application.ExeName)+'base.mdb;'+
+                                    'Mode=Share Deny None;'+
+                                    'Jet OLEDB:System database="";'+
+                                    'Jet OLEDB:Registry Path="";'+
+                                    'Jet OLEDB:Database Password="";'+
+                                    'Jet OLEDB:Engine Type=6;'+
+                                    'Jet OLEDB:Database Locking Mode=1;'+
+                                    'Jet OLEDB:Global Partial Bulk Ops=2;'+
+                                    'Jet OLEDB:Global Bulk Transactions=1;'+
+                                    'Jet OLEDB:New Database Password="";'+
+                                    'Jet OLEDB:Create System Database=False;'+
+                                    'Jet OLEDB:Encrypt Database=False;'+
+                                    'Jet OLEDB:Don''t Copy Locale on Compact=False;'+
+                                    'Jet OLEDB:Compact Without Replica Repair=False;'+
+                                    'Jet OLEDB:SFP=False;'+
+                                    'Jet OLEDB:Support Complex Data=False;';
    ADOConnection1.Connected:=true;
    ADOQuery1.SQL.Clear;
    ADOQuery1.SQL.Add('select * from docs order by id');
@@ -729,53 +745,6 @@ begin
   sleep(1000);
   result:=out_;
 end;
-
-function TForm1.archiveRun311(f:string): string;
-Const BTypeFilenameHead:string = 'SFC';
-  ATypeMask:string = 'SBC??4525344_*_*_xxx??.xml'; // маска для архивации сообщений по юр. лицам и иже с ними
-  BTypeMask:string = 'SFC??4525344_*_*_7??.xml'; //маска для архивации сообщений по физ. лицам (не ИП)
-  BIK:string = '25344';
-var
- inf:TIniFile;
- ArchiveDate:string;
- ArchiveNameA:string; //имя файла архива
- FilesStr:string;
- ArchivePathA:string;
-begin
-  inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
-//    date_311p       :=inf.ReadString('DIRECTORY','date_311p','');
-//    count_311p      :=inf.ReadInteger('DIRECTORY','count_311p',0);
-  inf.free;
-
-  ArchiveDate:=DateToStr(now);
-{  if date_311p=ArchiveDate then
-    inc(count_311p) else begin
-     date_311p:=ArchiveDate;
-     count_311p:=0;
-    end;}
-
-  inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
-//    inf.WriteString('DIRECTORY','date_311p',date_311p);
-//    inf.WriteInteger('DIRECTORY','count_311p',count_311p);
-  inf.free;
-
-  ArchiveDate:= FormatDateTime('yymmdd', strtodatetime(ArchiveDate));
-//  FilesStr:= '0000' + inttostr(count_311p);
-  FilesStr:=copy(FilesStr, Length(FilesStr)-3,4);
-
-  //формируем имя файла архива
-  ArchiveNameA:= 'AN' + BIK + ArchiveDate + FilesStr +'.arj';
-  //ArchiveNameB = "BN"& BIK & ArchiveDay & FilesStr &".arj"
-
-  //Полный путь к файлу архива - для каждого типа
-  ArchivePathA:=ARJ_311P_OUT +ArchiveNameA;
-  //ArchivePathB = ArchivePath & ArchiveNameB
-
-  // архивируем
-  ShellExecute(0,'open',PChar(ARJ), pchar(' m -e '+ ArchivePathA+' '+f), pchar(ExtractFileDir(ARJ)), SW_SHOW);
-  Sleep(1000);
-  Result:=ArchivePathA;
-end;
 {**********************************************************************
     фтс 365-п ответы BOS
 ************************************************************************}
@@ -846,14 +815,43 @@ begin
   message_list(movefile_(lastfile_arj,UTA_365p_OUT),'');
   end;
 end;
+{**********************************************************************
+    ведомости
+************************************************************************}
+procedure TForm1.N32311Click(Sender: TObject);
+var
+  f,dir,lastfile_arj:string;
+  i:integer;
+begin
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      dir:=ExtractFilePath(f);
+      message_list('TRANSFER',ExtractFileName(f));
+//      run(f,BUTTON7_EVAL);
+      DBfirstInsert(ExtractFileName(f),'-','-');
+    end;
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(dir+'*.arj','c:\temp\TRANSFER.ARJ','');
+  ShowMessage('Сформирован транспортный конверт');
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  ShowMessage('Транспортный конверт подписан КА');
 
+  message_list(movefile_(lastfile_arj,UTA_TRANSFER_OUT),'');
+  end;
+end;
+{**********************************************************************
+    распаковка
+************************************************************************}
 function TForm1.ARJ_extract(name_archive, out_catalog: string): string;
 begin
   ShellExecute(0,'open',PChar(ARJ), pchar('e '+name_archive), pchar(ExtractFileDir(out_catalog)), SW_SHOW);
   sleep(1000);
   result:='Распакован '+name_archive;
 end;
-
+{**********************************************************************
+    пишем отправляемый файл
+************************************************************************}
 function TForm1.DBfirstInsert(fn, arj, tk: string): string;
 begin
   ADOQuery1.Insert;
@@ -863,8 +861,16 @@ begin
   ADOQuery1.FieldByName('tk').AsString:=tk;
   ADOQuery1.Post;
 end;
+{**********************************************************************
+    окно деталей
+************************************************************************}
+procedure TForm1.DBGrid1DblClick(Sender: TObject);
+begin
+  Form2.ShowModal;
+end;
 
-function TForm1.DBfirstEdit(arj, tk: string): string;
+
+{function TForm1.DBfirstEdit(arj, tk: string): string;
 begin
   ADOQuery1.Edit;
   ADOQuery1.FieldByName('svod_arj').AsString:=arj;
@@ -896,22 +902,17 @@ begin
   end;
   ADOQuery1.Post;
 end;
-
-procedure TForm1.DBGrid1DblClick(Sender: TObject);
-begin
-  Form2.ShowModal;  
-end;
 {**********************************************************************
     read kvit
     result file name original
-************************************************************************}
+************************************************************************
 function TForm1.readKvit(f: string): string;
 begin
   Result:='123.FB2';
 end;
 {**********************************************************************
     rfind id from docs
-************************************************************************}
+************************************************************************
 function TForm1.DBfin_forKvit(f: string): string;
 begin
   ADOQuery2.SQL.Clear;
@@ -933,5 +934,6 @@ begin
   if id<>'0' then DBKvit(ID,'kvit_002.txt','1232.arj','tza022.099',2);
   if id<>'0' then DBKvit(ID,'kvit_003.txt','-','-',3);
 end;
+}
 
 end.
