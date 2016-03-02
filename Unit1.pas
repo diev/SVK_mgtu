@@ -62,7 +62,7 @@ type
     function DBfirstInsert(fn,arj,tk:string):string;
     procedure DBGrid1DblClick(Sender: TObject);
     procedure N32311Click(Sender: TObject);
-    function DBfirstEdit(id, arj, tk: string): string;    
+    function DBfirstEdit(id, arj, tk: string): string;
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -434,6 +434,10 @@ begin
                       repeat
                         if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
                           run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
+                          if copy(sr2.Name,1,2)='DT' then begin
+                            message_list('406-fz  --------------------','');
+                            run(TimerData[ind].PATH+sr2.Name,'LOADKEY_2;DECRYPT;RESETKEY_2;');
+                          end;
                           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
                           sleep(1000);
@@ -517,6 +521,7 @@ begin
           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
           sleep(1000);
+          // анализ квитанции
           message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN),ExtractFileName(sr.Name));
         end;
 
@@ -649,6 +654,7 @@ end;
 ************************************************************************}
 procedure TForm1.message_list(ms,file_name: string);
 begin
+  SGIN.RowCount:=SGIN.RowCount + 1;
   SGIN.Rows[ind_SG].Add(Datetostr(date));
   SGIN.Rows[ind_SG].Add(timetostr(time));
   SGIN.Rows[ind_SG].Add(ms);

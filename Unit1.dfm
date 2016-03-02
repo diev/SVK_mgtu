@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 249
   Top = 174
-  Width = 945
+  Width = 1121
   Height = 443
   Caption = #1074#1077#1088#1089#1080#1103' '#1076#1083#1103' '#1084#1075#1090#1091
   Color = clBtnFace
@@ -19,14 +19,14 @@ object Form1: TForm1
   object StatusBar1: TStatusBar
     Left = 0
     Top = 366
-    Width = 929
+    Width = 1105
     Height = 19
     Panels = <>
   end
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 929
+    Width = 1105
     Height = 366
     ActivePage = TabSheet1
     Align = alClient
@@ -36,20 +36,20 @@ object Form1: TForm1
       object SGIN: TStringGrid
         Left = 0
         Top = 0
-        Width = 921
+        Width = 1097
         Height = 338
         Align = alClient
         DefaultRowHeight = 15
         FixedCols = 0
-        RowCount = 50
+        RowCount = 7
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
         TabOrder = 0
         ColWidths = (
           64
           64
-          520
-          184
-          64)
+          653
+          301
+          15)
       end
     end
     object TabSheet2: TTabSheet
