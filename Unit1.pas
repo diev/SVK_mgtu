@@ -365,7 +365,7 @@ begin
 //            if id<>'0' then DBKvit(ID,sr.Name,'-','-',1);
          end;
 
-         // 402p
+         // 402p    last.arj
          if ind = 4 then begin
 
             message_list('402p ------------','');
@@ -403,22 +403,25 @@ begin
 
          end;
 
-         // 364p
+         // 364p last.arj
          if ind = 5 then begin
           message_list('364p ------------','');
-          Log(archive(TimerData[ind].PATH+sr.Name,TimerData[ind].arhiv));
-          AssignFile(f,TimerData[ind].PATH+sr.Name);Reset(f);Readln(f,s);s:=DosToWin(s);CloseFile(f);
+          newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
+          RenameFile(TimerData[ind].PATH+sr.Name,newname);
+          Log(archive(newname,TimerData[ind].arhiv));
+
+          AssignFile(f,newname);Reset(f);Readln(f,s);s:=DosToWin(s);CloseFile(f);
           //цб
           if Pos('Территориальное учреждение',s)<>0 then begin
             message_list('364p квитанция от цб','');
-            run(TimerData[ind].PATH+sr.Name,'DELSIGN;');
+            run(newname,'DELSIGN;');
             DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
             if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
             sleep(1000);
-            message_list(movefile_(TimerData[ind].PATH+sr.Name,TimerData[ind].target+DEN),'');
+            message_list(movefile_(newname,TimerData[ind].target+DEN),'');
           end else begin //фтс
             message_list('364p квитанция от фтс','');
-            lastfile_arj:=TimerData[ind].PATH+sr.Name;
+            lastfile_arj:=newname;
             Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
 
@@ -453,7 +456,7 @@ begin
 
          end;
 
-         // 365p
+         // 365p   last.arj
         if ind = 6 then begin
             message_list('365p ------------','');
             newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
