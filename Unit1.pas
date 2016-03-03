@@ -42,6 +42,10 @@ type
     ADOQuery1: TADOQuery;
     ADOQuery2: TADOQuery;
     N32311: TMenuItem;
+    N406fz1: TMenuItem;
+    N8: TMenuItem;
+    N9: TMenuItem;
+    N10: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -403,7 +407,7 @@ begin
 
          end;
 
-         // 364p last.arj
+         // 364p and 406fz last.arj
          if ind = 5 then begin
           message_list('364p ------------','');
           newname:=TimerData[ind].PATH+sr.Name+postfix+ExtractFileExt(sr.Name);
@@ -420,14 +424,44 @@ begin
             sleep(1000);
             message_list(movefile_(newname,TimerData[ind].target+DEN),'');
           end else begin //фтс
-            message_list('364p квитанция от фтс','');
             lastfile_arj:=newname;
             Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
             if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+            // декларации
+            if SysUtils.FindFirst(TimerData[ind].PATH+'ESDT*.arj', faAnyFile, sr1) = 0 then
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  message_list('406-fz  --------------------','');
+                  lastfile_arj:=TimerData[ind].PATH+sr1.Name;
+                  Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
+                  sleep(1000);
 
+                  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                  if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
+                  sleep(1000);
+                  message_list(movefile_(lastfile_arj,'D:\cb\406-fz\'+DEN),'');        // danger !!!
+                    // DT
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'*.xml', faAnyFile, sr2) = 0 then
+                      repeat
+                        if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
+                          message_list('406-fz  --------------------','');
+                          run(TimerData[ind].PATH+sr2.Name,'LOADKEY_2;DECRYPT;RESETKEY_2;');
+                          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                          if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
+                          sleep(1000);
+                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,'D:\cb\406-fz\'+DEN),'');
+                        end;
+                      until FindNext(sr2) <> 0;
+                    FindClose(sr2);
+
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+            //квитанции фтс
             if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  message_list('364p квитанция от фтс','');                
                   lastfile_arj:=TimerData[ind].PATH+sr1.Name;
                   Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                   sleep(1000);
@@ -437,10 +471,6 @@ begin
                       repeat
                         if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
                           run(TimerData[ind].PATH+sr2.Name,'DELSIGN;');
-                          if copy(sr2.Name,1,2)='DT' then begin
-                            message_list('406-fz  --------------------','');
-                            run(TimerData[ind].PATH+sr2.Name,'LOADKEY_2;DECRYPT;RESETKEY_2;');
-                          end;
                           DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
                           if not DirectoryExists(TimerData[ind].target+DEN) then ForceDirectories(TimerData[ind].target+DEN);
                           sleep(1000);

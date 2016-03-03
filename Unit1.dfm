@@ -183,6 +183,9 @@ object Form1: TForm1
         Caption = #1054#1090#1095#1077#1090#1085#1086#1089#1090#1100' KLIKO'
         OnClick = Button2Click
       end
+      object N9: TMenuItem
+        Caption = '-'
+      end
       object N364P1: TMenuItem
         Caption = '364'#1055' '#1060#1058#1057
         OnClick = Button4Click
@@ -190,6 +193,9 @@ object Form1: TForm1
       object N3111: TMenuItem
         Caption = '311'#1055' '#1060#1053#1057
         OnClick = Button7Click
+      end
+      object N10: TMenuItem
+        Caption = '-'
       end
       object N3651: TMenuItem
         Caption = '365'#1055' '#1082#1074#1080#1090#1072#1085#1094#1080#1080
@@ -199,9 +205,15 @@ object Form1: TForm1
         Caption = '365'#1055' '#1086#1090#1074#1077#1090
         OnClick = Button1Click
       end
+      object N8: TMenuItem
+        Caption = '-'
+      end
       object N32311: TMenuItem
-        Caption = #1042#1077#1076#1086#1084#1086#1089#1090#1080
+        Caption = '76 '#1042#1077#1076#1086#1084#1086#1089#1090#1080
         OnClick = N32311Click
+      end
+      object N406fz1: TMenuItem
+        Caption = '406-fz '#1050#1074#1080#1090#1072#1085#1094#1080#1103
       end
     end
     object N2: TMenuItem
