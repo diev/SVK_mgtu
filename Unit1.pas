@@ -46,6 +46,8 @@ type
     N8: TMenuItem;
     N9: TMenuItem;
     N10: TMenuItem;
+    N308p1: TMenuItem;
+    N381: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -67,6 +69,9 @@ type
     procedure DBGrid1DblClick(Sender: TObject);
     procedure N32311Click(Sender: TObject);
     function DBfirstEdit(id, arj, tk: string): string;
+    procedure N381Click(Sender: TObject);
+    procedure N406fz1Click(Sender: TObject);
+    procedure N308p1Click(Sender: TObject);
 
   private
     KLIKO_OUT_ARHIV,UTA_KLIKO_OUT,
@@ -115,7 +120,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.5 от 11/02/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.8 от 09/03/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -293,7 +298,7 @@ end;
 procedure TForm1.TimerProc(Sender: TObject);
 var
   ind:integer;
-  sr,sr1,sr2: TSearchRec;
+  sr,sr1,sr2,sr3: TSearchRec;
   postfix,newname,lastfile_arj,s:string;
   f:TextFile;
 begin
@@ -441,19 +446,33 @@ begin
                   sleep(1000);
                   message_list(movefile_(lastfile_arj,'D:\cb\406-fz\'+DEN),'');        // danger !!!
                     // DT
-                    if SysUtils.FindFirst(TimerData[ind].PATH+'*.xml', faAnyFile, sr2) = 0 then
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'DT*.xml', faAnyFile, sr2) = 0 then
                       repeat
                         if (sr2.Name<>'.') and (sr2.Name <>'..') and (sr2.Attr<>faDirectory) then begin
                           message_list('406-fz  --------------------','');
-                          run(TimerData[ind].PATH+sr2.Name,'LOADKEY_2;DECRYPT;RESETKEY_2;');
-                          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-                          if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
+                          lastfile_arj:=TimerData[ind].PATH+sr2.Name;
+                          run(lastfile_arj,'LOADKEY_2;DECRYPT;RESETKEY_2;');
+                          RenameFile(lastfile_arj,copy(ExtractFileName(lastfile_arj),1,5)+'.ARJ');
+                          lastfile_arj:=copy(ExtractFileName(lastfile_arj),1,5)+'.ARJ';
+                          ForceDirectories(ExtractFilePath(lastfile_arj)+'\tmp\');
+                          Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)+'\tmp\'));
                           sleep(1000);
-                          message_list(movefile_(TimerData[ind].PATH+sr2.Name,'D:\cb\406-fz\'+DEN),'');
+                          if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+{                            if SysUtils.FindFirst(TimerData[ind].PATH+'*', faAnyFile, sr3) = 0 then
+                              repeat
+                                if (sr3.Name<>'.') and (sr3.Name <>'..') and (sr3.Attr<>faDirectory) then begin
+                                  run(TimerData[ind].PATH+sr3.Name,'DELSIGN;');
+                                  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                                  if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
+                                  sleep(1000);
+                                  message_list(movefile_(TimerData[ind].PATH+sr3.Name,'D:\cb\406-fz\'+DEN),'');
+                                end;
+                              until FindNext(sr3) <> 0;
+                            FindClose(sr3);}
                         end;
+                       DeleteFile(ExtractFilePath(lastfile_arj)+'\tmp\');
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
-
                 end;
               until FindNext(sr1) <> 0;
             FindClose(sr1);
@@ -482,7 +501,7 @@ begin
                 end;
               until FindNext(sr1) <> 0;
             FindClose(sr1);
-          end; //
+          end; //if Pos('Территориальное учреждение',s)
 
          end;
 
@@ -1020,5 +1039,71 @@ begin
   if id<>'0' then DBKvit(ID,'kvit_003.txt','-','-',3);
 end;
 }
+{**********************************************************************
+    308p
+************************************************************************}
+procedure TForm1.N381Click(Sender: TObject);
+begin
+  ShowMessage('отправка через klikomsg');
+end;
+{**********************************************************************
+    406-fz
+************************************************************************}
+procedure TForm1.N406fz1Click(Sender: TObject);
+var
+  f,lastfile_arj,tk,dir,year,mes,day:string;
+  i:integer;
+begin
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      dir:=ExtractFilePath(f);
+      message_list('ПОЛОЖЕНИЕ 406FZ ФТС',f);
+      run(f,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+      DBfirstInsert(ExtractFileName(f),'-','-');
+    end;
+  year:=inttostr(YearOf(now));
+  mes:=inttostr(MonthOf(now));if Length(mes)=1 then mes:='0'+mes;
+  day:=inttostr(DayOf(now));if Length(day)=1 then day:='0'+day;
+  lastfile_arj:=ARJ_run(dir+'*.*',dir + 'KESDT_1067_0003_' + year+mes+day +'_001.arj','');
+  ShowMessage('Сформирован сводный архив');
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  ShowMessage('Сводный архив подписан КА');
+
+  tk:=inttostr(MonthOf(now));
+  if Length(tk)=1 then tk:='0'+tk;
+  tk:=_364P_TK +'a'+tk+'344.099.arj';
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(lastfile_arj,dir + tk,'');
+  ShowMessage('Сформирован транспортный конверт');
+  run(lastfile_arj,'LOADKEY_1;SIGN_1;RESETKEY_1;');
+  ShowMessage('Транспортный конверт подписан КА');
+  message_list(movefile_(lastfile_arj,UTA_364p_OUT),'');
+  end;
+end;
+{**********************************************************************
+    rosfinad
+************************************************************************}
+procedure TForm1.N308p1Click(Sender: TObject);
+var
+  f,dir,lastfile_arj,id:string;
+  i:integer;
+begin
+  if OpenDialog1.Execute then begin
+    for i:=0 to OpenDialog1.Files.Count - 1 do begin
+      f:=OpenDialog1.Files.Strings[i];
+      dir:=ExtractFilePath(f);
+      message_list('rosfinad',ExtractFileName(f));
+      run(f,BUTTON7_EVAL);
+      id:=DBfirstInsert(ExtractFileName(f),'-','-');
+    end;
+  // создаем транспортный конверт
+  lastfile_arj:=ARJ_run(dir+'*.*',dir+'rosf076099.ARJ','');
+  ShowMessage('Сформирован транспортный конверт');
+  if id<>'0' then DBfirstEdit(id,'-',ExtractFileName(lastfile_arj));
+
+  message_list(movefile_(lastfile_arj,'C:\uta\out_rosfinad\'),ExtractFileName(lastfile_arj));
+  end;
+end;
 
 end.

@@ -209,11 +209,20 @@ object Form1: TForm1
         Caption = '-'
       end
       object N32311: TMenuItem
-        Caption = '76 '#1042#1077#1076#1086#1084#1086#1089#1090#1080
+        Caption = '76 '#1074#1077#1076#1086#1084#1086#1089#1090#1080
         OnClick = N32311Click
       end
+      object N381: TMenuItem
+        Caption = '38 '#1087#1091#1085#1082#1090
+        OnClick = N381Click
+      end
       object N406fz1: TMenuItem
-        Caption = '406-fz '#1050#1074#1080#1090#1072#1085#1094#1080#1103
+        Caption = '406fz '#1082#1074#1080#1090#1072#1085#1094#1080#1103
+        OnClick = N406fz1Click
+      end
+      object N308p1: TMenuItem
+        Caption = '308p rosfinad'
+        OnClick = N308p1Click
       end
     end
     object N2: TMenuItem
