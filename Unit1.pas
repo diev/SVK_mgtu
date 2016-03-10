@@ -120,7 +120,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.8 от 09/03/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.8.1 от 10/03/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -477,7 +477,7 @@ begin
               until FindNext(sr1) <> 0;
             FindClose(sr1);
             //квитанции фтс
-            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.arj', faAnyFile, sr1) = 0 then // исправить
               repeat
                 if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
                   message_list('364p квитанция от фтс','');                
@@ -498,9 +498,26 @@ begin
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
 
+
                 end;
               until FindNext(sr1) <> 0;
             FindClose(sr1);
+
+            //квитанции фтс на 406
+            if SysUtils.FindFirst(TimerData[ind].PATH+'*.txt', faAnyFile, sr1) = 0 then 
+              repeat
+                if (sr1.Name<>'.') and (sr1.Name <>'..') and (sr1.Attr<>faDirectory) then begin
+                  message_list('406 квитанция от фтс','');                
+                    run(TimerData[ind].PATH+sr1.Name,'DELSIGN;');
+                    DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                    if not DirectoryExists('d:\cb\406-fz\'+DEN) then ForceDirectories('d:\cb\406-fz\'+DEN);
+                    sleep(1000);
+                    message_list(movefile_(TimerData[ind].PATH+sr1.Name,'d:\cb\406-fz\'+DEN),''); //danger
+                end;
+              until FindNext(sr1) <> 0;
+            FindClose(sr1);
+
+
           end; //if Pos('Территориальное учреждение',s)
 
          end;
