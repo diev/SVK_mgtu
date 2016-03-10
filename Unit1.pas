@@ -63,6 +63,7 @@ type
     procedure TimerProc(Sender: TObject);
     function ARJ_run(in_,out_,arch:string):string;
     function ARJ_extract(name_archive,out_catalog:string):string;
+    function _7Z_extract(name_archive,out_catalog:string):string;
     procedure Button1Click(Sender: TObject);
     procedure Button8Click(Sender: TObject);
     function DBfirstInsert(fn,arj,tk:string):string;
@@ -85,7 +86,7 @@ type
     DIR:string;
     TimerPool:array of TTimer;
     TimerData:array of StrTD;
-    ARJ:string;
+    ARJ,_7Z:string;
     ind_SG,ind_SG2:integer;
   public
   end;
@@ -120,7 +121,7 @@ var
  inf:TIniFile;
  s_:string;kt:integer;
 begin
-  form1.Caption:=form1.Caption+' 1.7.8.1 от 10/03/2016 ';
+  form1.Caption:=form1.Caption+' 1.7.8.2 от 10/03/2016 ';
   inf:=TIniFile.Create(ExtractFilePath(Application.ExeName)+'sp.ini');
 
   UTA_KLIKO_OUT   :=inf.ReadString('DIRECTORY','UTA_KLIKO_OUT','');
@@ -155,6 +156,7 @@ begin
   PATH_LOGI       :=inf.ReadString('DIRECTORY','PATH_LOGI','');
   LOGI            :=inf.ReadBool('COMMON','LOGI',false);
   ARJ             :=inf.ReadString('COMMON','ARJ','');
+  _7Z             :=ExtractFilePath(Application.ExeName)+'7za.exe';
 
   BUTTON1_EVAL   :=inf.ReadString('COMMON','BUTTON1_EVAL','');
   BUTTON2_EVAL   :=inf.ReadString('COMMON','BUTTON2_EVAL','');
@@ -452,24 +454,25 @@ begin
                           message_list('406-fz  --------------------','');
                           lastfile_arj:=TimerData[ind].PATH+sr2.Name;
                           run(lastfile_arj,'LOADKEY_2;DECRYPT;RESETKEY_2;');
-//                          Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj))); dont
+                          Log(_7Z_extract(lastfile_arj,ExtractFilePath(lastfile_arj)));
                           sleep(1000);
-//                          if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
-                          message_list(movefile_(lastfile_arj,'D:\cb\406-fz\'+DEN),'');        // danger !!!
-{                            if SysUtils.FindFirst(TimerData[ind].PATH+'*', faAnyFile, sr3) = 0 then
-                              repeat
-                                if (sr3.Name<>'.') and (sr3.Name <>'..') and (sr3.Attr<>faDirectory) then begin
-                                  run(TimerData[ind].PATH+sr3.Name,'DELSIGN;');
-                                  DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
-                                  if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
-                                  sleep(1000);
-                                  message_list(movefile_(TimerData[ind].PATH+sr3.Name,'D:\cb\406-fz\'+DEN),'');
-                                end;
-                              until FindNext(sr3) <> 0;
-                            FindClose(sr3);}
+                          if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
                         end;
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
+
+                    if SysUtils.FindFirst(TimerData[ind].PATH+'DT*', faAnyFile, sr3) = 0 then
+                      repeat
+                        if (sr3.Name<>'.') and (sr3.Name <>'..') and (sr3.Attr<>faDirectory) then begin
+                          run(TimerData[ind].PATH+sr3.Name,'DELSIGN;');
+                          DEN:=copy(DateToStr(Now),7,4)+copy(DateToStr(Now),4,2)+copy(DateToStr(Now),1,2)+'\';
+                          if not DirectoryExists('D:\cb\406-fz\'+DEN) then ForceDirectories('D:\cb\406-fz\'+DEN);
+                          sleep(1000);
+                          message_list(movefile_(TimerData[ind].PATH+sr3.Name,'D:\cb\406-fz\'+DEN),'');
+                        end;
+                      until FindNext(sr3) <> 0;
+                    FindClose(sr3);
+
                 end;
               until FindNext(sr1) <> 0;
             FindClose(sr1);
@@ -1118,6 +1121,13 @@ begin
 
   message_list(movefile_(lastfile_arj,'C:\uta\out_rosfinad\'),ExtractFileName(lastfile_arj));
   end;
+end;
+
+function TForm1._7Z_extract(name_archive, out_catalog: string): string;
+begin
+  ShellExecute(0,'open',PChar(_7Z), pchar('e '+name_archive + ' -o'+ out_catalog), pchar(''), SW_SHOW);
+  sleep(1000);
+  result:='Распакован '+name_archive;
 end;
 
 end.
