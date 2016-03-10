@@ -452,12 +452,10 @@ begin
                           message_list('406-fz  --------------------','');
                           lastfile_arj:=TimerData[ind].PATH+sr2.Name;
                           run(lastfile_arj,'LOADKEY_2;DECRYPT;RESETKEY_2;');
-                          RenameFile(lastfile_arj,copy(ExtractFileName(lastfile_arj),1,5)+'.ARJ');
-                          lastfile_arj:=copy(ExtractFileName(lastfile_arj),1,5)+'.ARJ';
-                          ForceDirectories(ExtractFilePath(lastfile_arj)+'\tmp\');
-                          Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj)+'\tmp\'));
+//                          Log(ARJ_extract(lastfile_arj,ExtractFilePath(lastfile_arj))); dont
                           sleep(1000);
-                          if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+//                          if FileExists(lastfile_arj) then DeleteFile(lastfile_arj);
+                          message_list(movefile_(lastfile_arj,'D:\cb\406-fz\'+DEN),'');        // danger !!!
 {                            if SysUtils.FindFirst(TimerData[ind].PATH+'*', faAnyFile, sr3) = 0 then
                               repeat
                                 if (sr3.Name<>'.') and (sr3.Name <>'..') and (sr3.Attr<>faDirectory) then begin
@@ -470,7 +468,6 @@ begin
                               until FindNext(sr3) <> 0;
                             FindClose(sr3);}
                         end;
-                       DeleteFile(ExtractFilePath(lastfile_arj)+'\tmp\');
                       until FindNext(sr2) <> 0;
                     FindClose(sr2);
                 end;
